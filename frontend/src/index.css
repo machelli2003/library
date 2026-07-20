@@ -2,19 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: "Inter", system-ui, sans-serif;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    margin: 0;
+    font-family: "Public Sans", system-ui, sans-serif;
+    background-color: #F7F8FA;
+    color: #0B1220;
+    @apply antialiased text-slate-900 bg-[#F7F8FA] dark:bg-[#0B1220] dark:text-slate-100;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: "Fraunces", serif;
+  }
+
+  /* Custom selection color */
+  ::selection {
+    background-color: rgba(0, 107, 63, 0.15);
+    color: #006B3F;
+  }
+
+  /* Custom focus states */
+  input:focus, select:focus, textarea:focus {
+    @apply border-indigo ring-1 ring-indigo outline-none;
+  }
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+/* Signature element: the ink-stamp status badge. Mimics a library
+   due-date rubber stamp — oval, monospace, slightly rotated, with a
+   faint double-struck shadow like real stamp ink. */
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+  transform: rotate(-2deg);
+  text-shadow: 0.4px 0.4px 0 currentColor;
+  background: transparent;
+  transition: all 0.2s ease-in-out;
 }
 
+.stamp:hover {
+  transform: rotate(0deg) scale(1.05);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}

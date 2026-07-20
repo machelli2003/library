@@ -1,275 +1,194 @@
+import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useState, useEffect, useRef } from "react";
-import { notificationsApi } from "../services/api/notificationsApi";
-import { io } from "socket.io-client";
 
 const NAV_ITEMS = {
   student: [
-    { to: "/student", label: "Dashboard", end: true },
-    { to: "/student/catalogue", label: "Catalogue" },
-    { to: "/student/history", label: "Borrow History" },
-    { to: "/student/fines", label: "Fines" },
-    { to: "/student/profile", label: "My Profile" },
+    { to: "/student", label: "Dashboard", end: true, icon: "dashboard" },
+    { to: "/student/catalogue", label: "Catalogue", icon: "catalogue" },
+    { to: "/student/history", label: "Borrow History", icon: "history" },
+    { to: "/student/fines", label: "Fines", icon: "fines" },
   ],
   librarian: [
-    { to: "/librarian", label: "Dashboard", end: true },
-    { to: "/librarian/books", label: "Manage Books" },
-    { to: "/librarian/categories", label: "Categories" },
-    { to: "/librarian/requests", label: "Borrow Requests" },
-    { to: "/librarian/loans", label: "Active Loans" },
-    { to: "/librarian/fines", label: "Fines" },
-    { to: "/librarian/reports", label: "Reports" },
-    { to: "/librarian/profile", label: "My Profile" },
+    { to: "/librarian", label: "Dashboard", end: true, icon: "dashboard" },
+    { to: "/librarian/books", label: "Manage Books", icon: "books" },
+    { to: "/librarian/categories", label: "Categories", icon: "categories" },
+    { to: "/librarian/requests", label: "Borrow Requests", icon: "requests" },
+    { to: "/librarian/fines", label: "Fines", icon: "fines" },
   ],
   admin: [
-    { to: "/admin", label: "Dashboard", end: true },
-    { to: "/admin/users", label: "Manage Users" },
-    { to: "/admin/reports", label: "Reports" },
-    { to: "/admin/profile", label: "My Profile" },
+    { to: "/admin", label: "Dashboard", end: true, icon: "dashboard" },
+    { to: "/admin/users", label: "Manage Users", icon: "users" },
+    { to: "/admin/reports", label: "Reports", icon: "reports" },
   ],
 };
 
-const TYPE_COLORS = {
-  borrow: "text-emerald-600 bg-emerald-50",
-  rejection: "text-red-600 bg-red-50",
-  fine: "text-amber-600 bg-amber-50",
-  overdue: "text-orange-600 bg-orange-50",
-};
-
-const TYPE_ICONS = {
-  borrow: "✓",
-  rejection: "✗",
-  fine: "⚠",
-  overdue: "⏰",
-};
-
-function NotificationDrawer({ onClose }) {
-  const [data, setData] = useState({ notifications: [], unread_count: 0 });
-  const [loading, setLoading] = useState(true);
-
-  const load = () => {
-    notificationsApi.list().then((res) => {
-      setData(res.data);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  };
-
-  useEffect(() => { load(); }, []);
-
-  const markAllRead = async () => {
-    await notificationsApi.markAllRead();
-    load();
-  };
-
-  const markOne = async (id) => {
-    await notificationsApi.markRead(id);
-    load();
-  };
-
-  return (
-    <div className="absolute right-0 top-10 z-50 w-80 rounded-xl border border-slate-200 bg-white shadow-xl">
-      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-        <h3 className="font-semibold text-slate-800">Notifications</h3>
-        <div className="flex items-center gap-3">
-          {data.unread_count > 0 && (
-            <button
-              onClick={markAllRead}
-              className="text-xs text-slate-500 hover:text-slate-700"
-            >
-              Mark all read
-            </button>
-          )}
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">✕</button>
-        </div>
-      </div>
-
-      <div className="max-h-80 overflow-y-auto">
-        {loading ? (
-          <p className="px-4 py-6 text-center text-sm text-slate-400">Loading…</p>
-        ) : data.notifications.length === 0 ? (
-          <p className="px-4 py-6 text-center text-sm text-slate-400">No notifications yet</p>
-        ) : (
-          data.notifications.map((n) => (
-            <div
-              key={n.id}
-              className={`flex gap-3 border-b border-slate-50 px-4 py-3 last:border-0 ${!n.is_read ? "bg-slate-50" : ""}`}
-            >
-              <span
-                className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${TYPE_COLORS[n.type] || "bg-slate-100 text-slate-500"}`}
-              >
-                {TYPE_ICONS[n.type] || "•"}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-slate-700 leading-snug">{n.message}</p>
-                <p className="mt-1 text-xs text-slate-400">
-                  {new Date(n.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              {!n.is_read && (
-                <button
-                  onClick={() => markOne(n.id)}
-                  className="flex-shrink-0 text-xs text-slate-400 hover:text-slate-600"
-                  title="Mark as read"
-                >
-                  ●
-                </button>
-              )}
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
+function getIconSvg(iconName) {
+  const props = { className: "h-5 w-5", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 1.5 };
+  switch (iconName) {
+    case "dashboard":
+      return (
+        <svg {...props}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+        </svg>
+      );
+    case "catalogue":
+    case "books":
+      return (
+        <svg {...props}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+        </svg>
+      );
+    case "history":
+      return (
+        <svg {...props}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+    case "fines":
+      return (
+        <svg {...props}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.879c1.003 1.003 2.63 1.003 3.633 0L15 13.06m-6-2.244l.879-.879c1.003-1.003 2.63-1.003 3.633 0L15 10.82m-9 7.433c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+    case "categories":
+      return (
+        <svg {...props}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581a1.125 1.125 0 001.591 0l4.318-4.318a1.125 1.125 0 000-1.591L9.568 3z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+        </svg>
+      );
+    case "requests":
+      return (
+        <svg {...props}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002-2.5V5.25A2.25 2.25 0 0018 3H6a2.25 2.25 0 00-2 2.25v13.5A2.25 2.25 0 006 21h12a2.25 2.25 0 002-2.25V15" />
+        </svg>
+      );
+    case "users":
+      return (
+        <svg {...props}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A2.25 2.25 0 0112.75 21.5h-1.5a2.25 2.25 0 01-2.25-2.263V19.13m4.5-4.004g-4.5 4.004M12.75 15.128a8.9 8.9 0 00-1.5-.084c-1.89 0-3.684.589-5.166 1.594a3.72 3.72 0 00-1.598 3.185v.109a2.25 2.25 0 002.25 2.25h9.75a2.25 2.25 0 002.25-2.25v-.11a3.72 3.72 0 00-1.598-3.184 8.878 8.878 0 00-2.516-1.109zm0-3.75a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0zm7.125-3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+        </svg>
+      );
+    case "reports":
+      return (
+        <svg {...props}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+        </svg>
+      );
+    default:
+      return null;
+  }
 }
 
 export default function DashboardLayout({ role }) {
   const { user, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const items = NAV_ITEMS[role] || [];
-  const [showNotifs, setShowNotifs] = useState(false);
-  const [unread, setUnread] = useState(0);
-  const [toasts, setToasts] = useState([]);
-  const bellRef = useRef(null);
 
-  const addToast = (msg) => {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, msg }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 5000);
-  };
-
-  // Connect WebSockets for notifications
-  useEffect(() => {
-    // Initial fetch of unread count
-    notificationsApi
-      .list()
-      .then((res) => setUnread(res.data.unread_count))
-      .catch(() => {});
-
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    const base = (import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace(/\/api$/, "");
-    const socket = io(base, {
-      auth: { token: `Bearer ${token}` },
-    });
-
-    socket.on("connect", () => {
-      console.log("WebSocket connected successfully");
-    });
-
-    socket.on("new_notification", (notif) => {
-      setUnread((prev) => prev + 1);
-      addToast(notif.message);
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [role]);
-
-  // Close drawer when clicking outside
-  useEffect(() => {
-    const handler = (e) => {
-      if (bellRef.current && !bellRef.current.contains(e.target)) {
-        setShowNotifs(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  const userInitials = user?.name
+    ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+    : "U";
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <aside className="flex w-60 flex-col border-r border-slate-200 bg-white p-5">
-        <div className="mb-8">
-          <p className="text-lg font-semibold text-slate-800">Library</p>
-          <p className="text-xs capitalize text-slate-400">{role} portal</p>
+    <div className="flex min-h-screen bg-paper text-slate-800">
+      
+      {/* Mobile Top Bar */}
+      <header className="flex h-16 w-full items-center justify-between border-b border-slate-200/60 bg-white px-6 lg:hidden fixed top-0 z-30 shadow-sm shadow-slate-100/50">
+        <div className="flex items-center gap-3">
+          <span className="stamp text-indigo scale-90">est. campus library</span>
+          <span className="font-display text-lg font-semibold text-ink">Library</span>
+        </div>
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo/25"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            {mobileMenuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            )}
+          </svg>
+        </button>
+      </header>
+
+      {/* Backdrop for Mobile Sidebar */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-20 bg-slate-900/30 backdrop-blur-sm lg:hidden"
+        />
+      )}
+
+      {/* Navigation Sidebar */}
+      <aside className={`fixed bottom-0 top-0 z-20 flex w-64 flex-col bg-ink p-6 transition-all duration-300 lg:sticky lg:left-0 lg:translate-x-0 ${
+        mobileMenuOpen ? "left-0 translate-x-0" : "-left-64 translate-x-0 lg:translate-x-0"
+      }`}>
+        {/* Spine-line element */}
+        <div className="absolute bottom-0 left-0 top-0 w-[4px] bg-gradient-to-b from-knust-green via-knust-gold to-knust-green" />
+
+        {/* Brand Header */}
+        <div className="mb-8 pl-3 flex flex-col gap-1.5">
+          <span className="font-display text-2xl font-bold tracking-tight text-white">
+            Library
+          </span>
+          <div className="inline-flex self-start rounded-full bg-white/10 px-2.5 py-0.5 border border-white/5">
+            <span className="font-mono text-[9px] font-semibold uppercase tracking-wider text-slate-300">
+              {role} portal
+            </span>
+          </div>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1">
+        {/* Navigation List */}
+        <nav className="flex flex-1 flex-col gap-1.5 pl-1">
           {items.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
+              onClick={() => setMobileMenuOpen(false)}
               className={({ isActive }) =>
-                `rounded-lg px-3 py-2 text-sm font-medium transition ${
+                `flex items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 ${
                   isActive
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-600 hover:bg-slate-100"
+                    ? "bg-indigo text-white shadow-md shadow-indigo/20 scale-[1.02]"
+                    : "text-slate-400 hover:bg-white/5 hover:text-white"
                 }`
               }
             >
-              {item.label}
+              {getIconSvg(item.icon)}
+              <span>{item.label}</span>
             </NavLink>
           ))}
         </nav>
 
-        <div className="border-t border-slate-100 pt-4">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="truncate text-sm text-slate-700">{user?.name}</p>
-
-            {/* Notification bell — visible to all roles */}
-            <div className="relative" ref={bellRef}>
-              <button
-                id="notification-bell"
-                onClick={() => setShowNotifs((v) => !v)}
-                className="relative flex h-7 w-7 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
-                title="Notifications"
-              >
-                🔔
-                {unread > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                    {unread > 9 ? "9+" : unread}
-                  </span>
-                )}
-              </button>
-
-              {showNotifs && (
-                <NotificationDrawer onClose={() => setShowNotifs(false)} />
-              )}
+        {/* Sidebar Footer / User Profile Panel */}
+        <div className="mt-auto border-t border-white/10 pt-4 px-2">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-knust-green to-knust-gold text-sm font-bold text-white shadow-md shadow-knust-green/20 border border-white/10">
+              {userInitials}
             </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-white">{user?.name || "Member"}</p>
+              <p className="truncate text-xs text-slate-400 font-medium">{user?.email}</p>
+            </div>
+            <button
+              onClick={logout}
+              title="Logout"
+              className="shrink-0 rounded-lg border border-white/10 bg-white/5 p-1.5 text-slate-400 transition-all duration-200 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/20"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M19.5 12l-3-3m3 3l-3 3m3-3H9" />
+              </svg>
+            </button>
           </div>
-
-          <button
-            onClick={logout}
-            className="w-full rounded-lg border border-slate-200 py-1.5 text-sm text-slate-500 hover:bg-slate-100"
-          >
-            Logout
-          </button>
         </div>
       </aside>
 
-      <main className="flex-1 p-8">
+      {/* Main Content Area */}
+      <main className="flex-1 p-6 lg:p-10 pt-20 lg:pt-10 max-w-7xl mx-auto w-full transition-all duration-300">
         <Outlet />
       </main>
-
-      {/* Floating real-time toasts container */}
-      <div className="fixed right-6 top-6 z-[9999] flex flex-col gap-3">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-100 max-w-sm w-80 animate-slide-in transition-all"
-            style={{ animation: "slideIn 0.3s ease-out" }}
-          >
-            <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs text-blue-600 font-bold">
-              ℹ
-            </span>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-slate-800">New Notification</p>
-              <p className="mt-0.5 text-xs text-slate-500 leading-snug">{t.msg}</p>
-            </div>
-            <button
-              onClick={() => setToasts((prev) => prev.filter((toast) => toast.id !== t.id))}
-              className="text-xs font-bold text-slate-400 hover:text-slate-600"
-            >
-              ✕
-            </button>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

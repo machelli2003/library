@@ -2,16 +2,21 @@ import { Link } from "react-router-dom";
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-6 text-center">
-      <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-sm">
-        <h1 className="text-6xl font-bold text-slate-800">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-slate-700">Page Not Found</h2>
-        <p className="mt-2 text-slate-500">
-          The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
+    <div className="relative flex min-h-screen items-center justify-center bg-[#F7F8FA] px-4 py-12 text-center">
+      {/* Background visual graphics */}
+      <div className="absolute right-0 top-0 -z-10 h-[400px] w-[400px] rounded-full bg-indigo/5 blur-3xl" />
+      <div className="absolute left-0 bottom-0 -z-10 h-[400px] w-[400px] rounded-full bg-sky/5 blur-3xl" />
+
+      <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-8 shadow-lg shadow-slate-200/50">
+        <span className="stamp text-crimson mb-4 text-[10px]">unresolved path</span>
+        <h1 className="font-display text-7xl font-bold tracking-tight text-ink">404</h1>
+        <h2 className="mt-4 font-display text-xl font-bold text-slate-800">Page Not Found</h2>
+        <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+          The textbook or section you are trying to read might have been removed, had its catalog location updated, or is temporarily unavailable.
         </p>
         <Link
           to="/"
-          className="mt-6 inline-block rounded-lg bg-slate-900 px-6 py-2 text-sm font-medium text-white hover:bg-slate-700 transition"
+          className="mt-8 inline-flex items-center gap-2 rounded-xl bg-ink px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-slate-900/10 transition-all hover:bg-indigo hover:shadow-indigo/15 hover:-translate-y-0.5"
         >
           Go Back Home
         </Link>
@@ -19,3 +24,4 @@ export default function NotFound() {
     </div>
   );
 }
+
