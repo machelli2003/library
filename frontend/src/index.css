@@ -1,72 +1,176 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────
+   shadcn/ui CSS Custom Properties (Light Mode)
+───────────────────────────────────────────────────── */
 @layer base {
+  :root {
+    --background:         210 40% 98%;     /* #F8FAFC */
+    --foreground:         222 47% 11%;     /* #0F172A */
+
+    --card:               0 0% 100%;
+    --card-foreground:    222 47% 11%;
+
+    --popover:            0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary:            221 83% 53%;     /* #2563EB Royal Executive Blue */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary:          215 25% 27%;     /* #1E293B Slate */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted:              210 40% 96%;
+    --muted-foreground:   215 16% 47%;
+
+    --accent:             217 91% 60%;     /* #3B82F6 Sapphire Accent */
+    --accent-foreground:  0 0% 100%;
+
+    --destructive:        0 84% 60%;      /* #EF4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    --border:             214 32% 91%;
+    --input:              214 32% 91%;
+    --ring:               221 83% 53%;
+
+    --radius:             0.75rem;
+  }
+
+  .dark {
+    --background:         222 47% 7%;
+    --foreground:         210 40% 98%;
+
+    --card:               222 47% 11%;
+    --card-foreground:    210 40% 98%;
+
+    --popover:            222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary:            221 83% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary:          217 19% 18%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted:              217 19% 15%;
+    --muted-foreground:   215 20% 65%;
+
+    --accent:             217 91% 60%;
+    --accent-foreground:  0 0% 100%;
+
+    --destructive:        0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border:             217 19% 18%;
+    --input:              217 19% 18%;
+    --ring:               221 83% 60%;
+  }
+}
+
+/* ─────────────────────────────────────────────────────
+   Base Styles
+───────────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
   }
-  
+
   body {
     margin: 0;
-    font-family: "Public Sans", system-ui, sans-serif;
-    background-color: #F7F8FA;
-    color: #0B1220;
-    @apply antialiased text-slate-900 bg-[#F7F8FA] dark:bg-[#0B1220] dark:text-slate-100;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    @apply antialiased bg-background text-foreground;
   }
 
   h1, h2, h3, h4, h5, h6, .font-display {
-    font-family: "Fraunces", serif;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
   }
 
-  /* Custom selection color */
   ::selection {
-    background-color: rgba(0, 107, 63, 0.15);
-    color: #006B3F;
+    background-color: rgba(30, 64, 175, 0.15);
+    color: #1E40AF;
   }
 
-  /* Custom focus states */
   input:focus, select:focus, textarea:focus {
-    @apply border-indigo ring-1 ring-indigo outline-none;
+    @apply outline-none ring-2 ring-brand-700/20 border-brand-700;
   }
 }
 
-/* Signature element: the ink-stamp status badge. Mimics a library
-   due-date rubber stamp — oval, monospace, slightly rotated, with a
-   faint double-struck shadow like real stamp ink. */
-.stamp {
-  display: inline-flex;
-  align-items: center;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 0.2rem 0.65rem;
-  border-radius: 999px;
-  border: 1.5px solid currentColor;
-  transform: rotate(-2deg);
-  text-shadow: 0.4px 0.4px 0 currentColor;
-  background: transparent;
-  transition: all 0.2s ease-in-out;
-}
-
-.stamp:hover {
-  transform: rotate(0deg) scale(1.05);
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* ─────────────────────────────────────────────────────
+   Custom Scrollbar
+───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: #CBD5E1;
   border-radius: 999px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* ─────────────────────────────────────────────────────
+   Signature Tag Badge (Executive Clean Pill)
+───────────────────────────────────────────────────── */
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s ease-in-out;
 }
+.stamp:hover {
+  transform: translateY(-1px);
+}
+
+/* ─────────────────────────────────────────────────────
+   Glass Card Utility
+───────────────────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+/* ─────────────────────────────────────────────────────
+   Gradient Text (Executive Sapphire Gradient)
+───────────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #0F172A 0%, #1E40AF 50%, #2563EB 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─────────────────────────────────────────────────────
+   Shimmer Skeleton
+───────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+}
+
+/* ─────────────────────────────────────────────────────
+   Stat Card Accent Strips
+───────────────────────────────────────────────────── */
+.stat-strip-green  { background: linear-gradient(180deg, #059669, #10b981); }
+.stat-strip-gold   { background: linear-gradient(180deg, #d97706, #f59e0b); }
+.stat-strip-red    { background: linear-gradient(180deg, #dc2626, #ef4444); }
+.stat-strip-blue   { background: linear-gradient(180deg, #1e40af, #3b82f6); }
+.stat-strip-purple { background: linear-gradient(180deg, #4f46e5, #6366f1); }

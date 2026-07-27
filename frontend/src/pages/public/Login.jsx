@@ -31,7 +31,7 @@ export default function Login() {
         
         {/* Brand/Heading */}
         <div className="mb-8 text-center">
-          <span className="stamp text-indigo mb-3 text-[10px]">campus login</span>
+          <span className="inline-flex items-center rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 ring-1 ring-inset ring-brand-200 mb-3">Portal Login</span>
           <h2 className="font-display text-3xl font-bold text-ink">Welcome Back</h2>
           <p className="mt-1.5 text-sm text-slate-400">Sign in to manage your library dashboard</p>
         </div>

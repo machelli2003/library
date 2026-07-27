@@ -45,7 +45,7 @@ export default function Register() {
         
         {/* Brand/Heading */}
         <div className="mb-8 text-center">
-          <span className="stamp text-indigo mb-3 text-[10px]">campus register</span>
+          <span className="inline-flex items-center rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 ring-1 ring-inset ring-brand-200 mb-3">Student Registration</span>
           <h2 className="font-display text-3xl font-bold text-ink">Create Account</h2>
           <p className="mt-1.5 text-sm text-slate-400">Join the library catalogue and track borrowing</p>
         </div>
@@ -66,7 +66,7 @@ export default function Register() {
             </label>
             <input
               type="text"
-              placeholder="e.g. John Doe"
+              placeholder="e.g. Prince Brown"
               {...registerField("name", { required: "Name is required." })}
               className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:border-indigo focus:ring-1 focus:ring-indigo"
             />

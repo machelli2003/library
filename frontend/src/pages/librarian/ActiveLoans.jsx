@@ -3,11 +3,14 @@ import { borrowApi } from "../../services/api/borrowApi";
 import StatusBadge from "../../components/StatusBadge";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import EmptyState from "../../components/EmptyState";
+import BarcodeScannerModal from "../../components/BarcodeScannerModal";
 
 export default function ActiveLoans() {
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortByOverdue, setSortByOverdue] = useState(true);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [actingOn, setActingOn] = useState(null);
 
   const load = () => {
@@ -32,39 +35,75 @@ export default function ActiveLoans() {
     }
   };
 
-  const filteredLoans = loans.filter((l) => {
-    const q = searchQuery.toLowerCase();
-    return (
-      l.user_name?.toLowerCase().includes(q) ||
-      l.book_title?.toLowerCase().includes(q) ||
-      l.status?.toLowerCase().includes(q)
-    );
-  });
+  const filteredLoans = loans
+    .filter((l) => {
+      const q = searchQuery.toLowerCase();
+      return (
+        l.user_name?.toLowerCase().includes(q) ||
+        l.book_title?.toLowerCase().includes(q) ||
+        l.status?.toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => {
+      if (!sortByOverdue) return 0;
+      if (a.status === "overdue" && b.status !== "overdue") return -1;
+      if (a.status !== "overdue" && b.status === "overdue") return 1;
+      return 0;
+    });
 
   if (loading) return <LoadingSpinner label="Loading active loan registry..." />;
 
   return (
     <div className="space-y-6">
-      {/* Page Header and Search Input */}
+      <BarcodeScannerModal
+        isOpen={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={(code) => setSearchQuery(code)}
+      />
+
+      {/* Page Header and Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-5">
         <div>
           <h1 className="font-display text-3xl font-bold text-ink">Active Loans & Returns</h1>
           <p className="text-sm text-slate-400 mt-1">Track active checkouts, overdue dates, and record library returns</p>
         </div>
         
-        {/* Search filter block */}
-        <div className="relative w-full sm:w-80">
-          <input
-            type="text"
-            placeholder="Search by student or title..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-800 transition shadow-sm placeholder:text-slate-400 focus:border-indigo focus:ring-1 focus:ring-indigo outline-none"
-          />
-          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-            <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => setScannerOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:bg-slate-800 transition"
+          >
+            <svg className="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM14.625 3.75c-.621 0-1.125.504-1.125 1.125v4.5c0 .621.504 1.125 1.125 1.125h4.5c.621 0 1.125-.504 1.125-1.125v-4.5c0-.621-.504-1.125-1.125-1.125h-4.5z" />
             </svg>
+            <span>Scan Barcode</span>
+          </button>
+
+          <button
+            onClick={() => setSortByOverdue(!sortByOverdue)}
+            className={`rounded-xl border px-3.5 py-2.5 text-xs font-bold transition ${
+              sortByOverdue
+                ? "border-amber-200 bg-amber-50 text-amber-800"
+                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            {sortByOverdue ? "Prioritize Overdue" : "Normal Sorting"}
+          </button>
+
+          {/* Search filter block */}
+          <div className="relative w-full sm:w-64">
+            <input
+              type="text"
+              placeholder="Search by student, title, or barcode..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-800 transition shadow-sm placeholder:text-slate-400 focus:border-indigo focus:ring-1 focus:ring-indigo outline-none"
+            />
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+              <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+            </div>
           </div>
         </div>
       </div>

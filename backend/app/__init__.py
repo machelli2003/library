@@ -89,7 +89,7 @@ def create_app(config_class=Config):
     # Don't start the scheduler twice under Flask's debug reloader, and skip
     # it entirely during tests (TESTING=True) since pytest doesn't need it.
     if not app.config.get("TESTING") and os.environ.get("WERKZEUG_RUN_MAIN") != "false":
-        from .scheduler import init_scheduler
-        init_scheduler(app)
+        from app.services.scheduler_service import start_background_scheduler
+        start_background_scheduler(app)
 
     return app

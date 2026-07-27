@@ -10,8 +10,8 @@ export default function Landing() {
       {/* Navigation Header bar */}
       <header className="mx-auto max-w-7xl px-6 py-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="stamp text-indigo font-semibold tracking-wider">est. campus library</span>
-          <span className="font-display text-xl font-bold tracking-tight text-ink">Library</span>
+          <span className="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 ring-1 ring-inset ring-brand-200">Academic Portal</span>
+          <span className="font-display text-xl font-bold tracking-tight text-ink">University Library</span>
         </div>
         <div className="flex gap-4">
           <Link
@@ -33,13 +33,13 @@ export default function Landing() {
       <main className="mx-auto max-w-7xl px-6 pt-16 pb-24 text-center lg:pt-24">
         <div className="inline-flex items-center gap-2.5 rounded-full bg-indigo-soft px-4 py-1.5 border border-indigo/10 mb-6 animate-fade-in">
           <span className="flex h-2 w-2 rounded-full bg-indigo animate-pulse" />
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-indigo">
-            Welcome to the Academic Portal
+          <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-indigo">
+            Official University Library Portal
           </span>
         </div>
 
         <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-ink max-w-4xl mx-auto leading-[1.1]">
-          The Gateway to <span className="bg-gradient-to-r from-indigo via-indigo/95 to-sky bg-clip-text text-transparent">Academic Discovery</span>
+          The Gateway to <span className="bg-gradient-to-r from-indigo via-blue-600 to-slate-900 bg-clip-text text-transparent">Academic Discovery</span>
         </h1>
         
         <p className="mt-6 max-w-xl mx-auto text-base md:text-lg text-slate-500 leading-relaxed">

@@ -1,18 +1,21 @@
-const STAMP_COLORS = {
-  pending: "text-amber",
-  approved: "text-sky",
-  rejected: "text-crimson",
-  borrowed: "text-sky",
-  returned: "text-emerald",
-  overdue: "text-crimson",
-  unpaid: "text-crimson",
-  paid: "text-emerald",
+import { Badge } from "./ui/badge";
+
+const STATUS_MAP = {
+  pending:  { variant: "pending",  dot: true },
+  approved: { variant: "approved", dot: true },
+  rejected: { variant: "rejected", dot: true },
+  borrowed: { variant: "borrowed", dot: true },
+  returned: { variant: "returned", dot: true },
+  overdue:  { variant: "overdue",  dot: true },
+  unpaid:   { variant: "unpaid",   dot: true },
+  paid:     { variant: "paid",     dot: true },
 };
 
 export default function StatusBadge({ status }) {
+  const config = STATUS_MAP[status?.toLowerCase()] || { variant: "outline", dot: false };
   return (
-    <span className={`stamp ${STAMP_COLORS[status] || "text-ink"}`}>
+    <Badge variant={config.variant} dot={config.dot}>
       {status}
-    </span>
+    </Badge>
   );
 }

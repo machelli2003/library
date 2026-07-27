@@ -49,6 +49,36 @@ export default function Reports() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleExportFines = async () => {
+    try {
+      const res = await dashboardApi.exportFines();
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "fines_report.csv");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      alert("Failed to export fines CSV");
+    }
+  };
+
+  const handleExportBorrows = async () => {
+    try {
+      const res = await dashboardApi.exportBorrows();
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "borrow_activity_report.csv");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      alert("Failed to export borrows CSV");
+    }
+  };
+
   if (loading) return <LoadingSpinner label="Compiling system analytics..." />;
   if (!data) return (
     <div className="rounded-xl border border-red-100 bg-red-50 p-6 text-sm font-medium text-red-600">
@@ -66,9 +96,33 @@ export default function Reports() {
   return (
     <div className="space-y-8">
       {/* Page Header */}
-      <div className="border-b border-slate-100 pb-5">
-        <h1 className="font-display text-3xl font-bold text-ink">System Reports & Analytics</h1>
-        <p className="text-sm text-slate-400 mt-1">Real-time borrowing trends, revenue tracking, and category distribution insights</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-5">
+        <div>
+          <h1 className="font-display text-3xl font-bold text-ink">System Reports & Analytics</h1>
+          <p className="text-sm text-slate-400 mt-1">Real-time borrowing trends, revenue tracking, and category distribution insights</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleExportFines}
+            className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-bold text-emerald-800 shadow-sm hover:bg-emerald-100 transition"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            <span>Export Fines CSV</span>
+          </button>
+
+          <button
+            onClick={handleExportBorrows}
+            className="inline-flex items-center gap-2 rounded-xl border border-indigo/20 bg-indigo-soft px-4 py-2.5 text-xs font-bold text-indigo shadow-sm hover:bg-indigo/10 transition"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            <span>Export Borrows CSV</span>
+          </button>
+        </div>
       </div>
 
       {/* Summary Metric Cards */}
@@ -199,7 +253,7 @@ export default function Reports() {
         <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm shadow-slate-200/40 space-y-4">
           <div>
             <h3 className="font-display text-lg font-bold text-ink">Fines Recovery Status (GHS)</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Collected vs. outstanding outstanding balance comparison</p>
+            <p className="text-xs text-slate-400 mt-0.5">Collected vs. outstanding balance comparison</p>
           </div>
           <div className="h-72">
             {data.total_fine_collected === 0 && data.total_fine_outstanding === 0 ? (
@@ -224,3 +278,4 @@ export default function Reports() {
     </div>
   );
 }
+

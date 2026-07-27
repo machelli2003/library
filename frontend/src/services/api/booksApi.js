@@ -13,4 +13,15 @@ export const booksApi = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
+  history: (id) => api.get(`/books/${id}/history`),
+  bulkImport: (data) => api.post("/books/bulk-import", data),
+  bulkImportFile: (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post("/books/bulk-import", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  recommended: () => api.get("/books/recommended"),
 };
+

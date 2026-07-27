@@ -23,10 +23,17 @@ import BorrowRequests from "./pages/librarian/BorrowRequests";
 import FineManagement from "./pages/librarian/FineManagement";
 import ManageCategories from "./pages/librarian/ManageCategories";
 import ActiveLoans from "./pages/librarian/ActiveLoans";
-import ManageUsers from "./pages/admin/ManageUsers";
+import BookHistory from "./pages/librarian/BookHistory";
+import BulkImport from "./pages/librarian/BulkImport";
 
 import AdminDashboard from "./pages/admin/Dashboard";
 import Reports from "./pages/admin/Reports";
+import AdminManageUsers from "./pages/admin/ManageUsers";
+import AdminManageBooks from "./pages/admin/ManageBooks";
+import AdminManageCategories from "./pages/admin/ManageCategories";
+import AdminBorrowRequests from "./pages/admin/BorrowRequests";
+import AdminActiveLoans from "./pages/admin/ActiveLoans";
+import AdminFines from "./pages/admin/FineManagement";
 
 export default function App() {
   return (
@@ -67,6 +74,8 @@ export default function App() {
             <Route path="books" element={<ManageBooks />} />
             <Route path="books/new" element={<BookForm />} />
             <Route path="books/:id/edit" element={<BookForm />} />
+            <Route path="books/:id/history" element={<BookHistory />} />
+            <Route path="books/bulk-import" element={<BulkImport />} />
             <Route path="requests" element={<BorrowRequests />} />
             <Route path="loans" element={<ActiveLoans />} />
             <Route path="fines" element={<FineManagement />} />
@@ -85,7 +94,16 @@ export default function App() {
           >
             <Route index element={<AdminDashboard />} />
             <Route path="reports" element={<Reports />} />
-            <Route path="users" element={<ManageUsers />} />
+            <Route path="users" element={<AdminManageUsers />} />
+            <Route path="books" element={<AdminManageBooks />} />
+            <Route path="books/new" element={<BookForm />} />
+            <Route path="books/:id/edit" element={<BookForm />} />
+            <Route path="books/:id/history" element={<BookHistory />} />
+            <Route path="books/bulk-import" element={<BulkImport />} />
+            <Route path="categories" element={<AdminManageCategories />} />
+            <Route path="requests" element={<AdminBorrowRequests />} />
+            <Route path="loans" element={<AdminActiveLoans />} />
+            <Route path="fines" element={<AdminFines />} />
             <Route path="profile" element={<StudentProfile />} />
           </Route>
         </Routes>
@@ -93,3 +111,4 @@ export default function App() {
     </AuthProvider>
   );
 }
+

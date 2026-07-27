@@ -8,6 +8,8 @@ export default function ManageCategories() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editName, setEditName] = useState("");
   const { register, handleSubmit, reset } = useForm();
 
   const load = () => {
@@ -37,20 +39,41 @@ export default function ManageCategories() {
     load();
   };
 
+  const startEdit = (cat) => {
+    setEditingId(cat.id);
+    setEditName(cat.name);
+    setError("");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditName("");
+  };
+
+  const handleEdit = async () => {
+    if (!editName.trim()) return;
+    setError("");
+    try {
+      await categoriesApi.update(editingId, { name: editName });
+      setEditingId(null);
+      setEditName("");
+      load();
+    } catch (err) {
+      setError(err.response?.data?.message || "Could not update category");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="border-b border-slate-100 pb-5">
         <h1 className="font-display text-3xl font-bold text-ink">Manage Categories</h1>
-        <p className="text-sm text-slate-400 mt-1">Classify textbook inventory by creating or deleting categories</p>
+        <p className="text-sm text-slate-400 mt-1">Classify textbook inventory by creating, editing, or deleting categories</p>
       </div>
 
       {/* Add Category Form Banner */}
       <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm shadow-slate-200/40">
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col sm:flex-row gap-3"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <input
               required
@@ -94,8 +117,40 @@ export default function ManageCategories() {
               <tbody className="divide-y divide-slate-50">
                 {categories.map((c) => (
                   <tr key={c.id} className="transition hover:bg-slate-50/30">
-                    <td className="px-6 py-4 font-semibold text-slate-800">{c.name}</td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4">
+                      {editingId === c.id ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="rounded-lg border border-indigo bg-white px-3 py-1.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo"
+                            autoFocus
+                          />
+                          <button
+                            onClick={handleEdit}
+                            className="rounded-lg bg-indigo px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo/90 transition"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="font-semibold text-slate-800">{c.name}</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <button
+                        onClick={() => startEdit(c)}
+                        className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                      >
+                        Edit
+                      </button>
                       <button
                         onClick={() => handleDelete(c.id)}
                         className="inline-flex items-center justify-center rounded-lg border border-red-100 bg-white px-3 py-1.5 text-xs font-semibold text-crimson transition hover:bg-red-50"

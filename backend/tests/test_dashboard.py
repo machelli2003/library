@@ -7,6 +7,7 @@ def test_student_dashboard_stats_shape(client, student_token):
     assert res.status_code == 200
     assert set(res.get_json().keys()) == {
         "books_borrowed", "due_soon", "outstanding_fines", "available_books",
+        "total_borrowed_all_time", "pending_requests",
     }
 
 

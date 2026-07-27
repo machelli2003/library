@@ -263,11 +263,11 @@ export default function BookDetails() {
                 onChange={(e) => setRating(parseInt(e.target.value))}
                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-900 shadow-sm"
               >
-                <option value={5}>⭐⭐⭐⭐⭐ (5/5)</option>
-                <option value={4}>⭐⭐⭐⭐ (4/5)</option>
-                <option value={3}>⭐⭐⭐ (3/5)</option>
-                <option value={2}>⭐⭐ (2/5)</option>
-                <option value={1}>⭐ (1/5)</option>
+                <option value={5}>5 Stars — Excellent</option>
+                <option value={4}>4 Stars — Very Good</option>
+                <option value={3}>3 Stars — Average</option>
+                <option value={2}>2 Stars — Fair</option>
+                <option value={1}>1 Star — Poor</option>
               </select>
             </div>
             
