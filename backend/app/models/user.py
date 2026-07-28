@@ -2,26 +2,21 @@ from datetime import datetime
 from app.extensions import db, bcrypt
 
 
-class User(db.Model):
-    __tablename__ = "users"
+class User(db.Document):
+    meta = {"collection": "users"}
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(150), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(
-        db.Enum("student", "librarian", "admin", name="user_role"),
-        nullable=False,
-        default="student",
-    )
-    is_active = db.Column(db.Boolean, default=True)
-    failed_login_attempts = db.Column(db.Integer, default=0, nullable=False)
-    locked_until = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    name = db.StringField(max_length=100, required=True)
+    email = db.EmailField(max_length=150, unique=True, required=True)
+    password_hash = db.StringField(max_length=255, required=True)
+    role = db.StringField(max_length=20, choices=("student", "librarian", "admin"), default="student", required=True)
+    is_active = db.BooleanField(default=True)
+    failed_login_attempts = db.IntField(default=0)
+    locked_until = db.DateTimeField(null=True)
+    created_at = db.DateTimeField(default=datetime.utcnow)
 
-    student_profile = db.relationship(
-        "StudentProfile", backref="user", uselist=False, cascade="all, delete-orphan"
-    )
+    # Student-specific fields (only populated when role == "student")
+    student_id = db.StringField(max_length=30, null=True)
+    program = db.StringField(max_length=100, null=True)
 
     def set_password(self, raw_password):
         self.password_hash = bcrypt.generate_password_hash(raw_password).decode("utf-8")
@@ -31,21 +26,21 @@ class User(db.Model):
 
     def to_dict(self):
         res = {
-            "id": self.id,
+            "id": str(self.id),
             "name": self.name,
             "email": self.email,
             "role": self.role,
             "is_active": self.is_active,
         }
-        if self.role == "student" and self.student_profile:
-            res["student_id"] = self.student_profile.student_id
-            res["program"] = self.student_profile.program
+        if self.role == "student":
+            res["student_id"] = self.student_id
+            res["program"] = self.program
         return res
 
+    def __repr__(self):
+        return f"<User {self.email}>"
 
-class StudentProfile(db.Model):
-    __tablename__ = "student_profiles"
 
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    student_id = db.Column(db.String(30), unique=True)
-    program = db.Column(db.String(100))
+# StudentProfile is merged into User document for MongoDB (embedded pattern)
+# No separate StudentProfile model needed
+

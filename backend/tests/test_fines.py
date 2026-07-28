@@ -17,9 +17,9 @@ def test_mark_fine_paid(client, student_token, librarian_token, db):
     record_id = borrow_res.get_json()["id"]
     client.patch(f"/api/borrow/{record_id}/approve", headers=auth_header(l_token))
 
-    record = BorrowRecord.query.get(record_id)
+    record = BorrowRecord.objects.get(id=record_id)
     record.due_date = date.today() - timedelta(days=3)
-    db.session.commit()
+    record.save()
 
     client.patch(f"/api/borrow/{record_id}/return", headers=auth_header(l_token))
 

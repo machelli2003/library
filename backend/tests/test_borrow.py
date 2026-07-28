@@ -92,9 +92,9 @@ def test_late_return_creates_correct_fine_amount(client, student_token, libraria
     client.patch(f"/api/borrow/{record_id}/approve", headers=auth_header(l_token))
 
     # simulate the book being 5 days overdue
-    record = BorrowRecord.query.get(record_id)
+    record = BorrowRecord.objects.get(id=record_id)
     record.due_date = date.today() - timedelta(days=5)
-    db.session.commit()
+    record.save()
 
     res2 = client.patch(f"/api/borrow/{record_id}/return", headers=auth_header(l_token))
     assert res2.status_code == 200

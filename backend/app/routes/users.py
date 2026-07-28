@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify
 
-from app.extensions import db
 from app.models import User
 from app.services.user_service import (
     list_users, get_user, set_active_status, change_role, UserError,
@@ -18,7 +17,7 @@ def get_users():
     return jsonify([u.to_dict() for u in users]), 200
 
 
-@users_bp.get("/<int:user_id>")
+@users_bp.get("/<path:user_id>")
 @role_required("admin")
 def get_user_detail(user_id):
     try:
@@ -28,7 +27,7 @@ def get_user_detail(user_id):
     return jsonify(user.to_dict()), 200
 
 
-@users_bp.put("/<int:user_id>")
+@users_bp.put("/<path:user_id>")
 @role_required("admin")
 def edit_user(user_id):
     try:
@@ -44,22 +43,22 @@ def edit_user(user_id):
         return jsonify({"message": "Name and email are required"}), 422
 
     if email != user.email:
-        if User.query.filter_by(email=email).first():
+        if User.objects(email=email).first():
             return jsonify({"message": "Email already in use"}), 409
         user.email = email
 
     user.name = name
-    db.session.commit()
+    user.save()
 
     from app.services.activity_service import log_activity
     from flask_jwt_extended import get_jwt_identity
-    actor_id = int(get_jwt_identity())
+    actor_id = str(get_jwt_identity())
     log_activity(actor_id, f"Updated user profile for '{user.name}' (ID: {user.id})")
 
     return jsonify(user.to_dict()), 200
 
 
-@users_bp.patch("/<int:user_id>/deactivate")
+@users_bp.patch("/<path:user_id>/deactivate")
 @role_required("admin")
 def deactivate(user_id):
     try:
@@ -69,7 +68,7 @@ def deactivate(user_id):
     return jsonify(user.to_dict()), 200
 
 
-@users_bp.patch("/<int:user_id>/activate")
+@users_bp.patch("/<path:user_id>/activate")
 @role_required("admin")
 def activate(user_id):
     try:
@@ -79,7 +78,7 @@ def activate(user_id):
     return jsonify(user.to_dict()), 200
 
 
-@users_bp.patch("/<int:user_id>/role")
+@users_bp.patch("/<path:user_id>/role")
 @role_required("admin")
 def update_role(user_id):
     data = request.get_json() or {}
@@ -90,7 +89,7 @@ def update_role(user_id):
     return jsonify(user.to_dict()), 200
 
 
-@users_bp.delete("/<int:user_id>")
+@users_bp.delete("/<path:user_id>")
 @role_required("admin")
 def remove_user(user_id):
     try:
@@ -98,12 +97,11 @@ def remove_user(user_id):
     except UserError as err:
         return jsonify({"message": err.message}), err.status_code
 
-    db.session.delete(user)
-    db.session.commit()
+    user.delete()
 
     from app.services.activity_service import log_activity
     from flask_jwt_extended import get_jwt_identity
-    actor_id = int(get_jwt_identity())
+    actor_id = str(get_jwt_identity())
     log_activity(actor_id, f"Deleted user '{user.name}' (ID: {user.id})")
 
     return jsonify({"message": "User deleted"}), 200

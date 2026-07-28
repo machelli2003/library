@@ -11,7 +11,6 @@ from app.schemas.book_schema import BookSchema, BookUpdateSchema
 from app.services.book_service import (
     list_books, get_book, create_book, update_book, delete_book, BookError,
 )
-from app.extensions import db
 from app.models import BorrowRecord, Book, Category
 from app.utils.decorators import role_required
 
@@ -30,16 +29,16 @@ def _allowed_file(filename):
 @jwt_required()
 def get_books():
     search = request.args.get("search")
-    category_id = request.args.get("category_id", type=int)
+    category_id = request.args.get("category_id")
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 12, type=int)
 
-    pagination = list_books(search, category_id, page, per_page)
+    books, total, current_page, total_pages = list_books(search, category_id, page, per_page)
     return jsonify({
-        "books": [b.to_dict() for b in pagination.items],
-        "total": pagination.total,
-        "page": pagination.page,
-        "pages": pagination.pages,
+        "books": [b.to_dict() for b in books],
+        "total": total,
+        "page": current_page,
+        "pages": total_pages,
     }), 200
 
 
@@ -47,34 +46,31 @@ def get_books():
 @jwt_required()
 def get_recommended_books():
     """Get personalized book recommendations for the current user."""
-    from sqlalchemy import func
-    user_id = int(get_jwt_identity())
+    user_id = get_jwt_identity()
 
     # Find categories user has previously borrowed
-    user_categories = (
-        db.session.query(Book.category_id)
-        .join(BorrowRecord, BorrowRecord.book_id == Book.id)
-        .filter(BorrowRecord.user_id == user_id, Book.category_id.isnot(None))
-        .group_by(Book.category_id)
-        .all()
-    )
-    category_ids = [cat_id for (cat_id,) in user_categories if cat_id]
+    user_borrows = BorrowRecord.objects(user_id=user_id).all()
+    borrowed_book_ids = [r.book_id for r in user_borrows if r.book_id]
+    
+    # Get the books the user borrowed to find their categories
+    borrowed_books = Book.objects(id__in=borrowed_book_ids) if borrowed_book_ids else []
+    category_ids = [b.category_id for b in borrowed_books if b.category_id]
 
-    query = Book.query.filter(Book.available_copies > 0)
+    query = Book.objects(available_copies__gt=0)
     if category_ids:
-        recommended = query.filter(Book.category_id.in_(category_ids)).limit(6).all()
+        recommended = query.filter(category_id__in=category_ids).limit(6).all()
     else:
-        recommended = query.order_by(Book.created_at.desc()).limit(6).all()
+        recommended = query.order_by("-created_at").limit(6).all()
 
     if len(recommended) < 6:
-        existing_ids = {b.id for b in recommended}
-        fallback = query.filter(Book.id.notin_(existing_ids)).limit(6 - len(recommended)).all()
+        existing_ids = [str(b.id) for b in recommended]
+        fallback = query.filter(id__nin=existing_ids).limit(6 - len(recommended)).all()
         recommended.extend(fallback)
 
     return jsonify([b.to_dict() for b in recommended]), 200
 
 
-@books_bp.get("/<int:book_id>")
+@books_bp.get("/<path:book_id>")
 @jwt_required()
 def get_book_detail(book_id):
     try:
@@ -84,7 +80,7 @@ def get_book_detail(book_id):
     return jsonify(book.to_dict()), 200
 
 
-@books_bp.get("/<int:book_id>/history")
+@books_bp.get("/<path:book_id>/history")
 @role_required("librarian", "admin")
 def get_book_borrow_history(book_id):
     """Get full borrowing history for a specific book."""
@@ -93,9 +89,7 @@ def get_book_borrow_history(book_id):
     except BookError as err:
         return jsonify({"message": err.message}), err.status_code
 
-    records = BorrowRecord.query.filter_by(book_id=book_id).order_by(
-        BorrowRecord.created_at.desc()
-    ).all()
+    records = BorrowRecord.objects(book_id=book_id).order_by("-created_at").all()
 
     return jsonify({
         "book": book.to_dict(),
@@ -118,7 +112,7 @@ def add_book():
         return jsonify({"message": err.message}), err.status_code
 
     from app.services.activity_service import log_activity
-    actor_id = int(get_jwt_identity())
+    actor_id = str(get_jwt_identity())
     log_activity(actor_id, f"Added book '{book.title}' to catalogue")
 
     return jsonify(book.to_dict()), 201
@@ -159,12 +153,11 @@ def bulk_import_books():
         # Look up or create category by name
         category_id = None
         if category_name:
-            cat = Category.query.filter_by(name=category_name).first()
+            cat = Category.objects(name=category_name).first()
             if not cat:
                 cat = Category(name=category_name)
-                db.session.add(cat)
-                db.session.flush()
-            category_id = cat.id
+                cat.save()
+            category_id = str(cat.id)
 
         try:
             book_data = {
@@ -187,7 +180,7 @@ def bulk_import_books():
     }), 201 if imported > 0 else 400
 
 
-@books_bp.put("/<int:book_id>")
+@books_bp.put("/<path:book_id>")
 @role_required("librarian", "admin")
 def edit_book(book_id):
     try:
@@ -201,13 +194,13 @@ def edit_book(book_id):
         return jsonify({"message": err.message}), err.status_code
 
     from app.services.activity_service import log_activity
-    actor_id = int(get_jwt_identity())
+    actor_id = str(get_jwt_identity())
     log_activity(actor_id, f"Updated book information for '{book.title}'")
 
     return jsonify(book.to_dict()), 200
 
 
-@books_bp.post("/<int:book_id>/cover")
+@books_bp.post("/<path:book_id>/cover")
 @role_required("librarian", "admin")
 def upload_cover(book_id):
     try:
@@ -227,12 +220,12 @@ def upload_cover(book_id):
     file.save(filepath)
 
     book.cover_url = f"/api/uploads/{filename}"
-    db.session.commit()
+    book.save()
 
     return jsonify(book.to_dict()), 200
 
 
-@books_bp.delete("/<int:book_id>")
+@books_bp.delete("/<path:book_id>")
 @role_required("librarian", "admin")
 def remove_book(book_id):
     try:
@@ -247,8 +240,7 @@ def remove_book(book_id):
         return jsonify({"message": err.message}), err.status_code
 
     from app.services.activity_service import log_activity
-    actor_id = int(get_jwt_identity())
+    actor_id = str(get_jwt_identity())
     log_activity(actor_id, f"Deleted book '{book_title}' from catalogue")
 
     return jsonify({"message": "Book deleted"}), 200
-

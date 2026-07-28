@@ -1,6 +1,5 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.extensions import db
 from app.models import Book, BorrowRecord, Reservation
 
 reservations_bp = Blueprint("reservations", __name__)
@@ -10,10 +9,10 @@ reservations_bp = Blueprint("reservations", __name__)
 @jwt_required()
 def my_reservations():
     """Get all reservations for the authenticated student."""
-    user_id = get_jwt_identity()
+    user_id = str(get_jwt_identity())
     records = (
-        Reservation.query.filter_by(user_id=user_id)
-        .order_by(Reservation.created_at.desc())
+        Reservation.objects(user_id=user_id)
+        .order_by("-created_at")
         .all()
     )
     return jsonify([r.to_dict() for r in records]), 200
@@ -23,14 +22,14 @@ def my_reservations():
 @jwt_required()
 def create_reservation():
     """Create a new pending hold on a book with zero copies available."""
-    user_id = get_jwt_identity()
+    user_id = str(get_jwt_identity())
     data = request.get_json() or {}
     book_id = data.get("book_id")
 
     if not book_id:
         return jsonify({"message": "book_id is required"}), 400
 
-    book = Book.query.get(book_id)
+    book = Book.objects(id=book_id).first()
     if not book:
         return jsonify({"message": "Book not found"}), 404
 
@@ -39,35 +38,40 @@ def create_reservation():
         return jsonify({"message": "Book is currently available for direct borrowing"}), 400
 
     # Constraint: Check if user already has an active borrow/request for this book
-    active_borrow = BorrowRecord.query.filter(
-        BorrowRecord.user_id == user_id,
-        BorrowRecord.book_id == book_id,
-        BorrowRecord.status.in_(("pending", "borrowed", "overdue")),
+    active_borrow = BorrowRecord.objects(
+        user_id=user_id,
+        book_id=book_id,
+        status__in=("pending", "borrowed", "overdue"),
     ).first()
     if active_borrow:
         return jsonify({"message": "You already have an active request or loan for this book"}), 400
 
     # Constraint: Check if user already has a pending reservation for this book
-    existing_reservation = Reservation.query.filter_by(
+    existing_reservation = Reservation.objects(
         user_id=user_id, book_id=book_id, status="pending"
     ).first()
     if existing_reservation:
         return jsonify({"message": "You already have a pending reservation for this book"}), 400
 
     # Create reservation
-    res = Reservation(user_id=user_id, book_id=book_id, status="pending")
-    db.session.add(res)
-    db.session.commit()
+    res = Reservation(
+        user_id=user_id,
+        book_id=book_id,
+        book_title=book.title,
+        book_author=book.author,
+        status="pending",
+    )
+    res.save()
 
     return jsonify(res.to_dict()), 201
 
 
-@reservations_bp.patch("/<int:id>/cancel")
+@reservations_bp.patch("/<path:id>/cancel")
 @jwt_required()
 def cancel_reservation(id):
     """Cancel a pending reservation."""
-    user_id = get_jwt_identity()
-    res = Reservation.query.filter_by(id=id, user_id=user_id).first()
+    user_id = str(get_jwt_identity())
+    res = Reservation.objects(id=id, user_id=user_id).first()
 
     if not res:
         return jsonify({"message": "Reservation not found"}), 404
@@ -76,6 +80,6 @@ def cancel_reservation(id):
         return jsonify({"message": f"Cannot cancel a reservation that is {res.status}"}), 400
 
     res.status = "cancelled"
-    db.session.commit()
+    res.save()
 
     return jsonify(res.to_dict()), 200

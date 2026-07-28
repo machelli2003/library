@@ -1,4 +1,3 @@
-from app.extensions import db
 from app.models import User
 
 
@@ -9,14 +8,14 @@ class UserError(Exception):
 
 
 def list_users(role=None):
-    query = User.query
+    query = User.objects
     if role:
-        query = query.filter_by(role=role)
-    return query.order_by(User.created_at.desc()).all()
+        query = query.filter(role=role)
+    return query.order_by("-created_at").all()
 
 
 def get_user(user_id):
-    user = User.query.get(user_id)
+    user = User.objects(id=user_id).first()
     if not user:
         raise UserError("User not found", 404)
     return user
@@ -25,7 +24,7 @@ def get_user(user_id):
 def set_active_status(user_id, is_active):
     user = get_user(user_id)
     user.is_active = is_active
-    db.session.commit()
+    user.save()
     return user
 
 
@@ -34,5 +33,6 @@ def change_role(user_id, new_role):
     if new_role not in ("student", "librarian", "admin"):
         raise UserError("Invalid role", 422)
     user.role = new_role
-    db.session.commit()
+    user.save()
     return user
+

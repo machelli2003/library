@@ -5,6 +5,7 @@ from app.services.borrow_service import (
     request_borrow, approve_borrow, reject_borrow, return_book, renew_borrow,
     get_user_history, get_pending_requests, BorrowError,
 )
+from app.models import BorrowRecord
 from app.utils.decorators import role_required
 
 borrow_bp = Blueprint("borrow", __name__)
@@ -18,19 +19,19 @@ def create_borrow_request():
     if not book_id:
         return jsonify({"message": "book_id is required"}), 422
 
-    user_id = get_jwt_identity()
+    user_id = str(get_jwt_identity())
     try:
         record = request_borrow(user_id, book_id)
     except BorrowError as err:
         return jsonify({"message": err.message}), err.status_code
 
     from app.services.activity_service import log_activity
-    log_activity(user_id, f"Requested borrow of book '{record.book.title if record.book else 'Unknown'}'")
+    log_activity(user_id, f"Requested borrow of book '{record.book_title or 'Unknown'}'")
 
     return jsonify(record.to_dict()), 201
 
 
-@borrow_bp.patch("/<int:record_id>/approve")
+@borrow_bp.patch("/<path:record_id>/approve")
 @role_required("librarian", "admin")
 def approve(record_id):
     try:
@@ -39,15 +40,13 @@ def approve(record_id):
         return jsonify({"message": err.message}), err.status_code
 
     from app.services.activity_service import log_activity
-    actor_id = int(get_jwt_identity())
-    student_name = record.user.name if record.user else "Unknown"
-    book_title = record.book.title if record.book else "Unknown"
-    log_activity(actor_id, f"Approved borrow request of '{book_title}' for student '{student_name}'")
+    actor_id = str(get_jwt_identity())
+    log_activity(actor_id, f"Approved borrow request of '{record.book_title or 'Unknown'}' for student '{record.user_name or 'Unknown'}'")
 
     return jsonify(record.to_dict()), 200
 
 
-@borrow_bp.patch("/<int:record_id>/reject")
+@borrow_bp.patch("/<path:record_id>/reject")
 @role_required("librarian", "admin")
 def reject(record_id):
     try:
@@ -56,15 +55,13 @@ def reject(record_id):
         return jsonify({"message": err.message}), err.status_code
 
     from app.services.activity_service import log_activity
-    actor_id = int(get_jwt_identity())
-    student_name = record.user.name if record.user else "Unknown"
-    book_title = record.book.title if record.book else "Unknown"
-    log_activity(actor_id, f"Rejected borrow request of '{book_title}' for student '{student_name}'")
+    actor_id = str(get_jwt_identity())
+    log_activity(actor_id, f"Rejected borrow request of '{record.book_title or 'Unknown'}' for student '{record.user_name or 'Unknown'}'")
 
     return jsonify(record.to_dict()), 200
 
 
-@borrow_bp.patch("/<int:record_id>/return")
+@borrow_bp.patch("/<path:record_id>/return")
 @role_required("librarian", "admin")
 def process_return(record_id):
     try:
@@ -73,26 +70,23 @@ def process_return(record_id):
         return jsonify({"message": err.message}), err.status_code
 
     from app.services.activity_service import log_activity
-    actor_id = int(get_jwt_identity())
-    student_name = record.user.name if record.user else "Unknown"
-    book_title = record.book.title if record.book else "Unknown"
-    log_activity(actor_id, f"Recorded return of book '{book_title}' from student '{student_name}'")
+    actor_id = str(get_jwt_identity())
+    log_activity(actor_id, f"Recorded return of book '{record.book_title or 'Unknown'}' from student '{record.user_name or 'Unknown'}'")
 
     return jsonify(record.to_dict()), 200
 
 
-@borrow_bp.patch("/<int:record_id>/renew")
+@borrow_bp.patch("/<path:record_id>/renew")
 @jwt_required()
 def renew(record_id):
-    user_id = get_jwt_identity()
+    user_id = str(get_jwt_identity())
     try:
         record = renew_borrow(record_id, user_id)
     except BorrowError as err:
         return jsonify({"message": err.message}), err.status_code
 
     from app.services.activity_service import log_activity
-    book_title = record.book.title if record.book else "Unknown"
-    log_activity(int(user_id), f"Renewed borrow checkout of book '{book_title}'")
+    log_activity(user_id, f"Renewed borrow checkout of book '{record.book_title or 'Unknown'}'")
 
     return jsonify(record.to_dict()), 200
 
@@ -100,7 +94,7 @@ def renew(record_id):
 @borrow_bp.get("/history")
 @jwt_required()
 def my_history():
-    user_id = get_jwt_identity()
+    user_id = str(get_jwt_identity())
     records = get_user_history(user_id)
     return jsonify([r.to_dict() for r in records]), 200
 
@@ -115,8 +109,7 @@ def pending():
 @borrow_bp.get("/active")
 @role_required("librarian", "admin")
 def active_loans():
-    from app.models.borrow_record import BorrowRecord
-    records = BorrowRecord.query.filter(
-        BorrowRecord.status.in_(("approved", "borrowed", "overdue"))
-    ).order_by(BorrowRecord.due_date.asc()).all()
+    records = BorrowRecord.objects(
+        status__in=("approved", "borrowed", "overdue")
+    ).order_by("+due_date").all()
     return jsonify([r.to_dict() for r in records]), 200

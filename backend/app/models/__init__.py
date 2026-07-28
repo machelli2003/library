@@ -1,4 +1,4 @@
-from .user import User, StudentProfile
+from .user import User
 from .category import Category
 from .book import Book
 from .borrow_record import BorrowRecord, BORROW_STATUSES
@@ -10,7 +10,6 @@ from .activity_log import ActivityLog
 
 __all__ = [
     "User",
-    "StudentProfile",
     "Category",
     "Book",
     "BorrowRecord",
@@ -21,3 +20,4 @@ __all__ = [
     "Review",
     "ActivityLog",
 ]
+

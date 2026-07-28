@@ -2,29 +2,36 @@ from datetime import datetime
 from app.extensions import db
 
 
-class Reservation(db.Model):
-    __tablename__ = "reservations"
+class Reservation(db.Document):
+    meta = {
+        "collection": "reservations",
+        "indexes": [
+            "user_id",
+            "book_id",
+            "status",
+            "created_at",
+            [("user_id", 1), ("book_id", 1)],
+        ],
+    }
 
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(
-        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
-    )
-    book_id = db.Column(
-        db.Integer, db.ForeignKey("books.id", ondelete="CASCADE"), nullable=False
-    )
-    status = db.Column(db.String(50), default="pending", nullable=False)  # 'pending', 'fulfilled', 'cancelled'
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
-    user = db.relationship("User", backref=db.backref("reservations", lazy=True))
-    book = db.relationship("Book", backref=db.backref("reservations", lazy=True))
+    user_id = db.StringField(required=True)  # User.id as string
+    book_id = db.StringField(required=True)  # Book.id as string
+    book_title = db.StringField(max_length=200, null=True)  # denormalized
+    book_author = db.StringField(max_length=150, null=True)  # denormalized
+    status = db.StringField(max_length=50, default="pending", choices=("pending", "fulfilled", "cancelled"))
+    created_at = db.DateTimeField(default=datetime.utcnow)
 
     def to_dict(self):
         return {
-            "id": self.id,
+            "id": str(self.id),
             "user_id": self.user_id,
             "book_id": self.book_id,
-            "book_title": self.book.title if self.book else None,
-            "book_author": self.book.author if self.book else None,
+            "book_title": self.book_title,
+            "book_author": self.book_author,
             "status": self.status,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+    def __repr__(self):
+        return f"<Reservation {self.id}>"
+

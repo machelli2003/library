@@ -1,7 +1,7 @@
 import os
 from flask import Flask, jsonify
 from .config import Config
-from .extensions import db, migrate, jwt, bcrypt, cors, socketio
+from .extensions import db, jwt, bcrypt, cors, socketio, init_mongodb
 
 
 def create_app(config_class=Config):
@@ -11,12 +11,17 @@ def create_app(config_class=Config):
     from .logging_config import setup_logging
     setup_logging(app)
 
-    db.init_app(app)
-    migrate.init_app(app, db)
+    # Initialize MongoDB connection (MongoEngine)
+    init_mongodb(app)
     jwt.init_app(app)
     bcrypt.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
-    socketio.init_app(app, cors_allowed_origins="*")
+    raw_origins = os.environ.get("CORS_ORIGINS", "*")
+    cors_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+    if not cors_origins or "*" in cors_origins:
+        cors_origins = "*"
+    cors.init_app(app, resources={r"/api/*": {"origins": cors_origins}})
+    async_mode = "threading" if app.config.get("TESTING") else "eventlet"
+    socketio.init_app(app, cors_allowed_origins=cors_origins, async_mode=async_mode)
 
     from flask_socketio import join_room
     from flask_jwt_extended import decode_token

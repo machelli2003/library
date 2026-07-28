@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 
 from app.extensions import db
-from app.models import User, StudentProfile
+from app.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -14,43 +14,35 @@ class AuthError(Exception):
 
 
 def register_user(data):
-    """Public registration path. Always creates a student — role is never
-    trusted from client input here."""
-    if User.query.filter_by(email=data["email"]).first():
+    """Public registration path. Always creates a student."""
+    if User.objects(email=data["email"]).first():
         raise AuthError("Email already registered", 409)
 
-    user = User(name=data["name"], email=data["email"], role="student")
-    user.set_password(data["password"])
-    db.session.add(user)
-    db.session.flush()
-
-    profile = StudentProfile(
-        user_id=user.id,
+    user = User(
+        name=data["name"],
+        email=data["email"],
+        role="student",
         student_id=data.get("student_id"),
         program=data.get("program"),
     )
-    db.session.add(profile)
-
-    db.session.commit()
+    user.set_password(data["password"])
+    user.save()
     return user
 
 
 def create_staff_user(data):
-    """Admin-gated path for creating librarian/admin accounts. Trusts the
-    `role` field because the caller (routes/auth.py) has already verified
-    the requester is an admin."""
-    if User.query.filter_by(email=data["email"]).first():
+    """Admin-gated path for creating librarian/admin accounts."""
+    if User.objects(email=data["email"]).first():
         raise AuthError("Email already registered", 409)
 
     user = User(name=data["name"], email=data["email"], role=data["role"])
     user.set_password(data["password"])
-    db.session.add(user)
-    db.session.commit()
+    user.save()
     return user
 
 
 def authenticate_user(email, password):
-    user = User.query.filter_by(email=email).first()
+    user = User.objects(email=email).first()
     if not user:
         logger.warning(f"Failed login attempt for email={email}")
         raise AuthError("Invalid email or password", 401)
@@ -63,7 +55,7 @@ def authenticate_user(email, password):
         user.failed_login_attempts += 1
         if user.failed_login_attempts >= 5:
             user.locked_until = datetime.utcnow() + timedelta(minutes=15)
-        db.session.commit()
+        user.save()
         logger.warning(f"Failed login attempt for email={email}")
         raise AuthError("Invalid email or password", 401)
 
@@ -73,6 +65,7 @@ def authenticate_user(email, password):
 
     user.failed_login_attempts = 0
     user.locked_until = None
-    db.session.commit()
+    user.save()
     logger.info(f"User {user.id} ({user.email}) logged in")
     return user
+

@@ -1,131 +1,126 @@
-# Automated University Library Management System
+# University Library Management System
 
-Full-stack: React + Vite (frontend) · Flask REST API (backend) · MySQL (database).
+Full-stack: **React + Vite** (frontend) · **Flask REST API** (backend) · **MongoDB Atlas** (database).
 
-## Status: Phase 7 complete (Testing)
+## Status: Phase 8 — Deployment (Render)
 
 - [x] Phase 1 — Planning
 - [x] Phase 2 — Frontend scaffold (routing, auth context, protected routes, dashboard stubs)
 - [x] Phase 3 — Backend auth + RBAC (JWT, register/login/me, role_required decorator)
-- [x] Phase 4 — Full DB schema + models (books, categories, borrow_records, fines) + seed script
+- [x] Phase 4 — MongoDB models (books, categories, borrow_records, fines) + seed script
 - [x] Phase 5 — REST APIs (books CRUD, borrow workflow, fines, dashboard stats)
 - [x] Phase 6 — Frontend wired to real APIs (catalogue, borrow requests, fine management, reports chart)
-- [x] Phase 7 — Testing (pytest suite: auth, books, borrow workflow, fines, dashboards — see docs/testing-strategy.md)
-- [ ] Phase 8 — Deployment
+- [x] Phase 7 — Testing (pytest suite: 33 tests, all passing with mongomock)
+- [x] Phase 8 — Deployment on Render (render.yaml blueprint)
 
-> **Known issue found in Phase 7 testing:** public registration currently
-> accepts an arbitrary `role`, allowing self-registration as admin. See
-> `docs/testing-strategy.md` for the recommended fix — apply before
-> deploying to production.
+---
 
-## Running Tests
+## Deployment (Render)
+
+This project uses a **render.yaml** Blueprint at the root to define both services.
+
+### Quick Deploy
+
+1. Push this repo to GitHub
+2. Go to [render.com](https://render.com) → **New → Blueprint**
+3. Connect your GitHub repo → Render will detect `render.yaml` automatically
+4. Set these **manual environment variables** in each service dashboard:
+
+**Backend (`library-backend`)**:
+| Variable | Value |
+|---|---|
+| `MONGO_URI` | `mongodb+srv://library_user:<pass>@cluster0.o35blay.mongodb.net/university_library?retryWrites=true&w=majority` |
+| `CORS_ORIGINS` | `https://library-frontend.onrender.com` |
+
+**Frontend (`library-frontend`)**:
+| Variable | Value |
+|---|---|
+| `VITE_API_URL` | `https://library-backend.onrender.com/api` |
+
+> **Important:** In MongoDB Atlas → Network Access → add `0.0.0.0/0` to allow Render's dynamic IPs.
+
+### Seed the Database
+
+After the backend is deployed, open the Render **Shell** tab and run:
 
 ```bash
-cd backend
-pip install -r requirements-dev.txt
-pytest -v
+python seed_mongo.py
 ```
 
-## Getting Started
+This creates 5 categories, 5 books, and 3 default users (student/librarian/admin with password `password123`).
 
-### Frontend
+---
 
-```bash
-cd frontend
-npm install
-cp .env.example .env
-npm run dev
-```
-
-Visit `http://localhost:5173`. Login/register won't work yet — there's no
-backend running behind `/api` until Phase 3. The routing, role-based
-protected routes, and dashboard shells are fully wired and ready.
+## Local Development
 
 ### Backend
 
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
+venv\Scripts\activate        # Windows
 pip install -r requirements.txt
-cp .env.example .env
-```
-
-Create the MySQL database first:
-
-```sql
-CREATE DATABASE university_library;
-```
-
-Then update `.env` with your local MySQL credentials, and run the migrations:
-
-```bash
-flask db init      # only the very first time
-flask db migrate -m "initial schema"
-flask db upgrade
-```
-
-Seed some demo data (5 categories, 5 books, 3 users — student/librarian/admin,
-all with password `password123`):
-
-```bash
-flask shell
->>> from app.seed import run_seed
->>> run_seed()
->>> exit()
-```
-
-Then start the server:
-
-```bash
+pip install -r requirements-dev.txt
+cp .env.example .env         # fill in MONGO_URI
 python run.py
 ```
 
-Full REST API is live at `http://localhost:5000/api` — auth, books CRUD,
-borrow workflow (request/approve/reject/return with automatic fine
-calculation), fines, and role-scoped dashboard stats.
+API available at `http://localhost:5000/api`.
 
-### Database
+### Frontend
 
-The schema for all five core tables (`users`, `student_profiles`,
-`categories`, `books`, `borrow_records`, `fines`) lives in
-`docs/schema.sql`. You can run it directly against your MySQL database, or
-wait for Phase 4 where it gets translated into SQLAlchemy models + Alembic
-migrations so it's version-controlled properly.
+```bash
+cd frontend
+npm install
+# Create .env with:  VITE_API_URL=http://localhost:5000/api
+npm run dev
+```
+
+Visit `http://localhost:5173`.
+
+### Tests
+
+```bash
+cd backend
+python -m pytest -v
+# 33 tests, all passing
+```
+
+---
 
 ## Folder Structure
 
 ```
 university-library-system/
+├── render.yaml               # Render Blueprint (both services)
 ├── backend/
-│   ├── app/
-│   │   ├── __init__.py       # app factory
-│   │   ├── config.py
-│   │   ├── extensions.py     # db, jwt, bcrypt, cors
-│   │   ├── models/           # SQLAlchemy models (Phase 4)
-│   │   ├── routes/           # Flask blueprints (Phase 3/5)
-│   │   ├── services/         # business logic
-│   │   ├── schemas/           # marshmallow validation
-│   │   └── utils/             # decorators, error handlers
-│   ├── migrations/
-│   ├── tests/
-│   └── run.py
-├── frontend/
-│   ├── src/
-│   │   ├── pages/
-│   │   │   ├── public/        # Landing, Login, Register, Unauthorized
-│   │   │   ├── student/
-│   │   │   ├── librarian/
-│   │   │   └── admin/
-│   │   ├── context/           # AuthContext
-│   │   ├── routes/            # ProtectedRoute
-│   │   └── services/api/      # axios instance + per-resource calls
-└── docs/
-    └── schema.sql
+│   ├── Procfile              # gunicorn start command
+│   ├── requirements.txt
+│   ├── requirements-dev.txt
+│   ├── run.py
+│   ├── seed_mongo.py         # MongoDB seed script
+│   ├── create_db.py          # Ensures indexes on Atlas
+│   ├── clear_data.py         # Drops all collections
+│   └── app/
+│       ├── __init__.py       # App factory + blueprints
+│       ├── config.py
+│       ├── extensions.py     # MongoEngine, JWT, bcrypt, CORS, SocketIO
+│       ├── models/           # MongoEngine documents
+│       ├── routes/           # Flask blueprints
+│       ├── services/         # Business logic
+│       ├── schemas/          # Marshmallow validation
+│       └── utils/            # Decorators
+└── frontend/
+    ├── public/
+    │   └── _redirects        # SPA fallback for Render
+    ├── vite.config.js
+    └── src/
+        ├── pages/
+        │   ├── public/       # Landing, Login, Register
+        │   ├── student/
+        │   ├── librarian/
+        │   └── admin/
+        ├── context/          # AuthContext
+        ├── routes/           # ProtectedRoute
+        └── services/api/     # Axios instance + per-resource API calls
 ```
-
-## Next Phase
-
-Phase 3 wires up Flask auth (`/api/auth/register`, `/api/auth/login`,
-`/api/auth/me`) with JWT + role-based access control, matching the exact
-contract the frontend's `AuthContext` already expects.

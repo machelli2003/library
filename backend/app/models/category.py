@@ -1,13 +1,14 @@
 from app.extensions import db
 
 
-class Category(db.Model):
-    __tablename__ = "categories"
+class Category(db.Document):
+    meta = {"collection": "categories"}
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), unique=True, nullable=False)
-
-    books = db.relationship("Book", backref="category", lazy=True)
+    name = db.StringField(max_length=80, unique=True, required=True)
 
     def to_dict(self):
-        return {"id": self.id, "name": self.name}
+        return {"id": str(self.id), "name": self.name}
+
+    def __repr__(self):
+        return f"<Category {self.name}>"
+

@@ -35,13 +35,13 @@ def add_category():
 
     from app.services.activity_service import log_activity
     from flask_jwt_extended import get_jwt_identity
-    actor_id = int(get_jwt_identity())
+    actor_id = str(get_jwt_identity())
     log_activity(actor_id, f"Created category '{category.name}'")
 
     return jsonify(category.to_dict()), 201
 
 
-@categories_bp.put("/<int:category_id>")
+@categories_bp.put("/<path:category_id>")
 @role_required("librarian", "admin")
 def edit_category(category_id):
     try:
@@ -57,7 +57,7 @@ def edit_category(category_id):
     return jsonify(category.to_dict()), 200
 
 
-@categories_bp.delete("/<int:category_id>")
+@categories_bp.delete("/<path:category_id>")
 @role_required("librarian", "admin")
 def remove_category(category_id):
     # Retrieve category name for logging before deletion
@@ -75,7 +75,7 @@ def remove_category(category_id):
 
     from app.services.activity_service import log_activity
     from flask_jwt_extended import get_jwt_identity
-    actor_id = int(get_jwt_identity())
+    actor_id = str(get_jwt_identity())
     log_activity(actor_id, f"Deleted category '{cat_name}'")
 
     return jsonify({"message": "Category deleted"}), 200

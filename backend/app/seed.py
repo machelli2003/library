@@ -4,21 +4,21 @@ Run with:
     >>> from app.seed import run_seed
     >>> run_seed()
 """
-from app.extensions import db
-from app.models import User, StudentProfile, Category, Book
+from app.models import User, Category, Book
 
 
 def run_seed():
+    # Create categories
     categories_data = ["Computer Science", "Mathematics", "Literature", "Engineering", "Business"]
     categories = {}
     for name in categories_data:
-        cat = Category.query.filter_by(name=name).first()
+        cat = Category.objects(name=name).first()
         if not cat:
             cat = Category(name=name)
-            db.session.add(cat)
-            db.session.flush()
+            cat.save()
         categories[name] = cat
 
+    # Create books
     books_data = [
         ("Introduction to Algorithms", "Cormen, Leiserson, Rivest", "9780262033848", "Computer Science", 3),
         ("Clean Code", "Robert C. Martin", "9780132350884", "Computer Science", 2),
@@ -27,33 +27,39 @@ def run_seed():
         ("The Lean Startup", "Eric Ries", "9780307887894", "Business", 2),
     ]
     for title, author, isbn, category_name, qty in books_data:
-        if not Book.query.filter_by(isbn=isbn).first():
+        if not Book.objects(isbn=isbn).first():
+            cat = categories[category_name]
             book = Book(
                 title=title,
                 author=author,
                 isbn=isbn,
-                category_id=categories[category_name].id,
+                category_id=str(cat.id),
+                category_name=category_name,
                 quantity=qty,
                 available_copies=qty,
             )
-            db.session.add(book)
+            book.save()
 
-    if not User.query.filter_by(email="librarian@uni.edu").first():
+    # Create users
+    if not User.objects(email="librarian@uni.edu").first():
         librarian = User(name="Ama Serwaa", email="librarian@uni.edu", role="librarian")
         librarian.set_password("password123")
-        db.session.add(librarian)
+        librarian.save()
 
-    if not User.query.filter_by(email="admin@uni.edu").first():
+    if not User.objects(email="admin@uni.edu").first():
         admin = User(name="System Admin", email="admin@uni.edu", role="admin")
         admin.set_password("password123")
-        db.session.add(admin)
+        admin.save()
 
-    if not User.query.filter_by(email="student@uni.edu").first():
-        student = User(name="Kwame Boateng", email="student@uni.edu", role="student")
+    if not User.objects(email="student@uni.edu").first():
+        student = User(
+            name="Kwame Boateng",
+            email="student@uni.edu",
+            role="student",
+            student_id="UG/2024/0123",
+            program="BSc Computer Science",
+        )
         student.set_password("password123")
-        db.session.add(student)
-        db.session.flush()
-        db.session.add(StudentProfile(user_id=student.id, student_id="UG/2024/0123", program="BSc Computer Science"))
+        student.save()
 
-    db.session.commit()
-    print("Seed complete: 5 categories, 5 books, 3 users (student/librarian/admin)")
+    print("✅ MongoDB seed complete: 5 categories, 5 books, 3 users (student/librarian/admin)")

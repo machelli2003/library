@@ -1,28 +1,41 @@
+from datetime import datetime
 from app.extensions import db
 
 
-class Fine(db.Model):
-    __tablename__ = "fines"
+class Fine(db.Document):
+    meta = {
+        "collection": "fines",
+        "indexes": [
+            "borrow_record_id",
+            "user_id",
+            "status",
+            "created_at",
+            [("user_id", 1), ("status", 1)],
+        ],
+    }
 
-    id = db.Column(db.Integer, primary_key=True)
-    borrow_record_id = db.Column(
-        db.Integer, db.ForeignKey("borrow_records.id", ondelete="CASCADE"), nullable=False
-    )
-    amount = db.Column(db.Numeric(8, 2), nullable=False)
-    status = db.Column(db.Enum("unpaid", "paid", name="fine_status"), default="unpaid")
-    paid_at = db.Column(db.DateTime, nullable=True)
+    borrow_record_id = db.StringField(required=True)  # BorrowRecord.id as string
+    user_id = db.StringField(null=True)  # denormalized for easier queries
+    user_name = db.StringField(max_length=100, null=True)
+    user_email = db.StringField(max_length=150, null=True)
+    book_title = db.StringField(max_length=200, null=True)
+    amount = db.DecimalField(precision=8, scale=2, required=True)
+    status = db.StringField(max_length=20, choices=("unpaid", "paid"), default="unpaid")
+    paid_at = db.DateTimeField(null=True)
+    created_at = db.DateTimeField(default=datetime.utcnow)
 
     def to_dict(self):
-        borrow = self.borrow_record
-        user = borrow.user if borrow else None
-        book = borrow.book if borrow else None
         return {
-            "id": self.id,
+            "id": str(self.id),
             "borrow_record_id": self.borrow_record_id,
             "amount": float(self.amount),
             "status": self.status,
             "paid_at": self.paid_at.isoformat() if self.paid_at else None,
-            "user_name": user.name if user else None,
-            "user_email": user.email if user else None,
-            "book_title": book.title if book else None,
+            "user_name": self.user_name,
+            "user_email": self.user_email,
+            "book_title": self.book_title,
         }
+
+    def __repr__(self):
+        return f"<Fine {self.id} ${self.amount}>"
+

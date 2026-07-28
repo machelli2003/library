@@ -17,7 +17,7 @@ from app.services.auth_service import (
     authenticate_user,
     AuthError,
 )
-from app.models import User, StudentProfile
+from app.models import User
 from app.utils.decorators import role_required
 
 auth_bp = Blueprint("auth", __name__)
@@ -60,7 +60,7 @@ def register():
         return jsonify({"message": err.message}), err.status_code
 
     from app.services.activity_service import log_activity
-    log_activity(user.id, "Registered a new student profile")
+    log_activity(str(user.id), "Registered a new student profile")
 
     return jsonify(user.to_dict()), 201
 
@@ -80,7 +80,7 @@ def create_staff():
         return jsonify({"message": err.message}), err.status_code
 
     from app.services.activity_service import log_activity
-    log_activity(int(get_jwt_identity()), f"Created staff account for {user.name} ({user.role})")
+    log_activity(str(get_jwt_identity()), f"Created staff account for {user.name} ({user.role})")
 
     return jsonify(user.to_dict()), 201
 
@@ -107,7 +107,7 @@ def login():
     )
 
     from app.services.activity_service import log_activity
-    log_activity(user.id, "Logged in")
+    log_activity(str(user.id), "Logged in")
 
     return jsonify({"access_token": access_token, "refresh_token": refresh_token, "user": user.to_dict()}), 200
 
@@ -116,7 +116,7 @@ def login():
 @jwt_required(refresh=True)
 def refresh():
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = User.objects(id=user_id).first()
     if not user:
         return jsonify({"message": "User not found"}), 404
 
@@ -131,7 +131,7 @@ def refresh():
 @jwt_required()
 def me():
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = User.objects(id=user_id).first()
     if not user:
         return jsonify({"message": "User not found"}), 404
     return jsonify(user.to_dict()), 200
@@ -147,11 +147,10 @@ def logout():
 @jwt_required()
 def update_profile():
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = User.objects(id=user_id).first()
     if not user:
         return jsonify({"message": "User not found"}), 404
 
-    from app.extensions import db
     data = request.get_json() or {}
     name = data.get("name")
     email = data.get("email")
@@ -161,7 +160,7 @@ def update_profile():
         return jsonify({"message": "Name and email are required"}), 422
 
     if email != user.email:
-        if User.query.filter_by(email=email).first():
+        if User.objects(email=email).first():
             return jsonify({"message": "Email already in use"}), 409
         user.email = email
 
@@ -170,19 +169,18 @@ def update_profile():
     if user.role == "student":
         student_id = data.get("student_id")
         program = data.get("program")
-        if not user.student_profile:
-            user.student_profile = StudentProfile(user_id=user.id)
-        user.student_profile.student_id = student_id
-        user.student_profile.program = program
+        user.student_id = student_id
+        user.program = program
 
     if password:
         if len(password) < 8 or not any(c.isdigit() for c in password) or not any(c.isalpha() for c in password):
             return jsonify({"message": "Password must be at least 8 characters and contain both letters and numbers"}), 422
         user.set_password(password)
 
-    db.session.commit()
+    user.save()
 
     from app.services.activity_service import log_activity
-    log_activity(user.id, "Updated profile settings")
+    log_activity(str(user.id), "Updated profile settings")
 
     return jsonify(user.to_dict()), 200
+

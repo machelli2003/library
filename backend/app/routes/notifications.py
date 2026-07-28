@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from app.extensions import db
 from app.models import Notification
 
 notifications_bp = Blueprint("notifications", __name__)
@@ -11,11 +10,10 @@ notifications_bp = Blueprint("notifications", __name__)
 @jwt_required()
 def list_notifications():
     """Return all notifications for the current user, newest first."""
-    user_id = get_jwt_identity()
+    user_id = str(get_jwt_identity())
     notifications = (
-        Notification.query
-        .filter_by(user_id=user_id)
-        .order_by(Notification.created_at.desc())
+        Notification.objects(user_id=user_id)
+        .order_by("-created_at")
         .limit(50)
         .all()
     )
@@ -26,16 +24,16 @@ def list_notifications():
     }), 200
 
 
-@notifications_bp.patch("/<int:notification_id>/read")
+@notifications_bp.patch("/<path:notification_id>/read")
 @jwt_required()
 def mark_read(notification_id):
     """Mark a single notification as read (only the owning user may do this)."""
-    user_id = get_jwt_identity()
-    n = Notification.query.filter_by(id=notification_id, user_id=user_id).first()
+    user_id = str(get_jwt_identity())
+    n = Notification.objects(id=notification_id, user_id=user_id).first()
     if not n:
         return jsonify({"message": "Notification not found"}), 404
     n.is_read = True
-    db.session.commit()
+    n.save()
     return jsonify(n.to_dict()), 200
 
 
@@ -43,7 +41,10 @@ def mark_read(notification_id):
 @jwt_required()
 def mark_all_read():
     """Mark every unread notification for the current user as read."""
-    user_id = get_jwt_identity()
-    Notification.query.filter_by(user_id=user_id, is_read=False).update({"is_read": True})
-    db.session.commit()
+    user_id = str(get_jwt_identity())
+    unread = Notification.objects(user_id=user_id, is_read=False)
+    for n in unread:
+        n.is_read = True
+        n.save()
+    Notification.objects(user_id=user_id, is_read=False).update(set__is_read=True)
     return jsonify({"message": "All notifications marked as read"}), 200

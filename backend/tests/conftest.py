@@ -1,24 +1,30 @@
 import pytest
+import mongoengine
+import mongomock
 from app import create_app
 from app.config import Config
-from app.extensions import db as _db
-from app.models import User
+from app.models import User, Book, Category, BorrowRecord, Fine, Notification, Reservation, Review, ActivityLog
 
 
 class TestConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    MONGODB_URI = "mongodb://localhost/test_db"
     JWT_SECRET_KEY = "test-secret"
 
 
 @pytest.fixture
 def app():
+    mongoengine.disconnect_all()
+    mongoengine.connect("test_db", host="mongodb://localhost/test_db", mongo_client_class=mongomock.MongoClient, alias="default")
     application = create_app(TestConfig)
     with application.app_context():
-        _db.create_all()
         yield application
-        _db.session.remove()
-        _db.drop_all()
+    for model in [User, Book, Category, BorrowRecord, Fine, Notification, Reservation, Review, ActivityLog]:
+        try:
+            model.drop_collection()
+        except Exception:
+            pass
+    mongoengine.disconnect_all()
 
 
 @pytest.fixture
@@ -28,7 +34,7 @@ def client(app):
 
 @pytest.fixture
 def db(app):
-    return _db
+    return mongoengine
 
 
 def _register_and_login(client, email, password, role, name="Test User"):
@@ -41,8 +47,7 @@ def _register_and_login(client, email, password, role, name="Test User"):
         with client.application.app_context():
             user = User(name=name, email=email, role=role)
             user.set_password(password)
-            _db.session.add(user)
-            _db.session.commit()
+            user.save()
 
     res = client.post("/api/auth/login", json={"email": email, "password": password})
     body = res.get_json()
@@ -62,3 +67,4 @@ def librarian_token(client):
 @pytest.fixture
 def admin_token(client):
     return _register_and_login(client, "admin@test.com", "Password123", "admin")
+
