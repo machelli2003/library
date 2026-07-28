@@ -12,13 +12,13 @@ services:
       - key: FLASK_ENV
         value: production
       - key: SECRET_KEY
-        generateValue: true        # Render auto-generates a secure random value
+        generateValue: true
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: MONGO_URI
-        sync: false                # You enter this manually in the Render dashboard
+        sync: false                # Enter your MongoDB Atlas URI in the Render dashboard
       - key: CORS_ORIGINS
-        sync: false                # Set to your frontend URL, e.g. https://library-frontend.onrender.com
+        value: https://muna-library.onrender.com
       - key: PYTHON_VERSION
         value: "3.11.9"
 
@@ -36,4 +36,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        sync: false                # Set to your backend URL, e.g. https://library-backend.onrender.com/api
+        value: https://muna-librarybackend.onrender.com/api
