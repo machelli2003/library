@@ -98,3 +98,7 @@ def create_app(config_class=Config):
         start_background_scheduler(app)
 
     return app
+
+
+# Module-level app instance so WSGI servers running `gunicorn app:app` find the app attribute
+app = create_app()
