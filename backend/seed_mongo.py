@@ -44,23 +44,23 @@ def run_seed():
                 book.save()
 
         # Create users
-        if not User.objects(email="librarian@uni.edu").first():
-            librarian = User(name="Ama Serwaa", email="librarian@uni.edu", role="librarian")
+        if not User.objects(email="muna@librarian.edu").first():
+            librarian = User(name="Muna", email="muna@librarian.edu", role="librarian")
             librarian.set_password("password123")
             librarian.save()
 
-        if not User.objects(email="admin@uni.edu").first():
-            admin = User(name="System Admin", email="admin@uni.edu", role="admin")
+        if not User.objects(email="muna@admin.edu").first():
+            admin = User(name="System Admin", email="muna@admin.edu", role="admin")
             admin.set_password("password123")
             admin.save()
 
-        if not User.objects(email="student@uni.edu").first():
+        if not User.objects(email="muna@student.edu").first():
             student = User(
-                name="Kwame Boateng",
-                email="student@uni.edu",
+                name="Maymuna Faisal",
+                email="muna@student.edu",
                 role="student",
-                student_id="UG/2024/0123",
-                program="BSc Computer Science",
+                student_id="SML/2024/001",
+                program="BSc Library and Information Science",
             )
             student.set_password("password123")
             student.save()
