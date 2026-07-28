@@ -5,7 +5,7 @@ services:
     runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --worker-class eventlet -w 1 run:app
+    startCommand: gunicorn --worker-class gthread -w 1 --threads 8 run:app
     plan: free
     healthCheckPath: /api/health
     envVars:

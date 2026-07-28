@@ -1,5 +1,11 @@
-import eventlet
-eventlet.monkey_patch()
+import os
+
+# Safely attempt eventlet monkey patch if supported (Python < 3.13)
+try:
+    import eventlet
+    eventlet.monkey_patch()
+except Exception:
+    pass
 
 from app import create_app
 from app.extensions import socketio

@@ -20,7 +20,7 @@ def create_app(config_class=Config):
     if not cors_origins or "*" in cors_origins:
         cors_origins = "*"
     cors.init_app(app, resources={r"/api/*": {"origins": cors_origins}})
-    async_mode = "threading" if app.config.get("TESTING") else "eventlet"
+    async_mode = "threading" if app.config.get("TESTING") else os.environ.get("SOCKETIO_ASYNC_MODE", "threading")
     socketio.init_app(app, cors_allowed_origins=cors_origins, async_mode=async_mode)
 
     from flask_socketio import join_room
