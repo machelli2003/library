@@ -109,26 +109,15 @@ export default function DashboardLayout({ role }) {
       )}
 
       {/* ── Desktop Layout Spacer ── */}
-      <div
-        className={cn(
-          "hidden lg:block shrink-0 transition-all duration-300 ease-in-out",
-          isPinned ? "w-64" : "w-20"
-        )}
-      />
+      <div className="hidden lg:block shrink-0 w-72" />
 
       {/* ── Sidebar ── */}
       <aside
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
         className={cn(
-          "fixed bottom-0 top-0 z-30 flex flex-col border-r transition-all duration-300 ease-in-out shadow-xl backdrop-blur-md",
-          sidebarTheme,
-          isExpanded ? "w-64" : "w-20",
+          "fixed inset-y-0 z-30 flex w-full max-w-[280px] flex-col border-r border-slate-900 bg-slate-950 text-slate-200 shadow-xl transition-transform duration-300",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        {/* Subtle Accent Line */}
-        <div className={cn("absolute left-0 inset-y-0 w-[3px] rounded-r bg-gradient-to-b", headerGradient)} />
 
         {/* ── Sidebar Header ── */}
         <div className="flex items-center gap-3 border-b border-slate-900 px-5 py-5">
