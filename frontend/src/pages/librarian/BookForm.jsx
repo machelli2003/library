@@ -33,7 +33,7 @@ export default function BookForm() {
     const payload = {
       ...data,
       quantity: Number(data.quantity),
-      category_id: data.category_id ? Number(data.category_id) : null,
+      category_id: data.category_id ? data.category_id : null,
     };
     try {
       let bookId = id;
