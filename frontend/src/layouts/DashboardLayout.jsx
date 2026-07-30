@@ -13,6 +13,7 @@ import {
   BarChart3,
   Upload,
   LogOut,
+  FileText,
   Menu,
   X,
   Library,
@@ -42,6 +43,7 @@ const NAV_ITEMS = {
   ],
   admin: [
     { to: "/admin",                   label: "Dashboard",        icon: LayoutDashboard, end: true },
+    { to: "/admin/audit-logs",        label: "Audit Logs",       icon: FileText },
     { to: "/admin/users",             label: "Manage Users",     icon: Users },
     { to: "/admin/books",             label: "Manage Books",     icon: BookMarked },
     { to: "/admin/books/bulk-import", label: "Bulk Import",      icon: Upload },

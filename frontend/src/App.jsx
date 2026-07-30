@@ -34,6 +34,7 @@ import AdminManageCategories from "./pages/admin/ManageCategories";
 import AdminBorrowRequests from "./pages/admin/BorrowRequests";
 import AdminActiveLoans from "./pages/admin/ActiveLoans";
 import AdminFines from "./pages/admin/FineManagement";
+import AuditLogs from "./pages/admin/AuditLogs";
 
 export default function App() {
   return (
@@ -93,6 +94,7 @@ export default function App() {
           >
             <Route index element={<AdminDashboard />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="audit-logs" element={<AuditLogs />} />
             <Route path="users" element={<AdminManageUsers />} />
             <Route path="books" element={<AdminManageBooks />} />
             <Route path="books/new" element={<BookForm />} />
