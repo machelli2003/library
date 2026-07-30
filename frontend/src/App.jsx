@@ -60,6 +60,7 @@ export default function App() {
             <Route path="history" element={<BorrowHistory />} />
             <Route path="fines" element={<StudentFines />} />
             <Route path="profile" element={<StudentProfile />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
 
           <Route
@@ -82,6 +83,7 @@ export default function App() {
             <Route path="categories" element={<ManageCategories />} />
             <Route path="reports" element={<Reports />} />
             <Route path="profile" element={<StudentProfile />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
 
           <Route
@@ -105,6 +107,7 @@ export default function App() {
             <Route path="loans" element={<AdminActiveLoans />} />
             <Route path="fines" element={<AdminFines />} />
             <Route path="profile" element={<StudentProfile />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </BrowserRouter>
