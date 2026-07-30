@@ -18,6 +18,8 @@ import {
   X,
   Library,
   Bell,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { cn } from "../lib/utils";
 
@@ -67,6 +69,7 @@ const ROLE_ACTIVE_ITEMS = {
 export default function DashboardLayout({ role }) {
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const activeClass = ROLE_ACTIVE_ITEMS[role] || ROLE_ACTIVE_ITEMS.student;
 
   const items = NAV_ITEMS[role] || [];
@@ -109,25 +112,36 @@ export default function DashboardLayout({ role }) {
       )}
 
       {/* ── Desktop Layout Spacer ── */}
-      <div className="hidden lg:block shrink-0 w-72" />
+      <div className={cn(
+        "hidden lg:block shrink-0 transition-all duration-300",
+        sidebarCollapsed ? "w-20" : "w-[280px]"
+      )} />
 
       {/* ── Sidebar ── */}
       <aside
         className={cn(
-          "fixed inset-y-0 z-30 flex w-full max-w-[280px] flex-col border-r border-slate-900 bg-slate-950 text-slate-200 shadow-xl transition-transform duration-300",
+          "fixed inset-y-0 z-30 flex flex-col border-r border-slate-900 bg-slate-950 text-slate-200 shadow-xl transition-all duration-300",
+          sidebarCollapsed ? "w-20" : "w-[280px]",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
 
         {/* ── Sidebar Header ── */}
-        <div className="flex items-center gap-3 border-b border-slate-900 px-5 py-5">
+        <div className="flex items-center gap-3 border-b border-slate-900 px-4 py-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-800 text-white shadow-sm">
             <Library className="h-6 w-6" />
           </div>
-          <div>
+          <div className={cn("overflow-hidden transition-all duration-300", sidebarCollapsed ? "max-w-0 opacity-0" : "max-w-full opacity-100") }>
             <p className="font-display text-lg font-bold text-white">UniLib</p>
             <p className="text-xs uppercase tracking-widest text-slate-500">{role} portal</p>
           </div>
+          <button
+            type="button"
+            onClick={() => setSidebarCollapsed((prev) => !prev)}
+            className="ml-auto hidden h-9 w-9 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white lg:flex"
+          >
+            {sidebarCollapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
+          </button>
         </div>
 
         {/* ── Navigation Items ── */}
@@ -143,12 +157,13 @@ export default function DashboardLayout({ role }) {
                 className={({ isActive }) =>
                   cn(
                     "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors",
+                    sidebarCollapsed ? "justify-center px-3" : "",
                     isActive ? activeClass : "text-slate-300 hover:bg-slate-800 hover:text-white"
                   )
                 }
               >
                 <Icon className="h-5 w-5 shrink-0" />
-                <span>{item.label}</span>
+                <span className={cn(sidebarCollapsed && "hidden")}>{item.label}</span>
               </NavLink>
             );
           })}
@@ -156,21 +171,24 @@ export default function DashboardLayout({ role }) {
 
         {/* ── Sidebar Footer / User Profile ── */}
         <div className="mt-auto border-t border-slate-900 px-4 py-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-slate-900 p-3">
+          <div className={cn("flex items-center gap-3 rounded-2xl bg-slate-900 p-3 transition-all duration-300", sidebarCollapsed ? "justify-center" : "") }>
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-700 text-sm font-bold text-white">
               {userInitials}
             </div>
-            <div className="min-w-0">
+            <div className={cn("min-w-0 transition-all duration-300", sidebarCollapsed ? "hidden" : "block") }>
               <p className="truncate text-sm font-semibold text-white">{user?.name || "Member"}</p>
               <p className="truncate text-xs text-slate-400">{user?.email}</p>
             </div>
           </div>
           <button
             onClick={logout}
-            className="mt-3 flex w-full items-center justify-center rounded-2xl border border-slate-800 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white"
+            className={cn(
+              "mt-3 flex w-full items-center justify-center rounded-2xl border border-slate-800 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white",
+              sidebarCollapsed ? "px-3" : ""
+            )}
           >
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
+            <LogOut className={cn("h-4 w-4", sidebarCollapsed ? "mr-0" : "mr-2") } />
+            <span className={cn(sidebarCollapsed && "hidden")}>Logout</span>
           </button>
         </div>
       </aside>
