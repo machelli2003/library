@@ -36,8 +36,13 @@ export default function BookForm() {
       return;
     }
     const payload = {
-      ...data,
+      title: data.title,
+      author: data.author,
+      isbn: data.isbn || null,
       category_id: data.category_id ? data.category_id : null,
+      quantity: data.quantity,
+      description: data.description || null,
+      cover_url: data.cover_url || null,
     };
     try {
       let bookId = id;
