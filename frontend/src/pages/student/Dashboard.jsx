@@ -18,20 +18,34 @@ import {
   Legend,
 } from "recharts";
 
-const BORROW_HISTORY_DEMO = [
-  { month: "Feb", books: 1 },
-  { month: "Mar", books: 3 },
-  { month: "Apr", books: 2 },
-  { month: "May", books: 4 },
-  { month: "Jun", books: 2 },
-  { month: "Jul", books: 3 },
-];
+const buildBorrowActivity = (records) => {
+  const now = new Date();
+  const months = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
+    return {
+      key: `${date.getFullYear()}-${date.getMonth()}`,
+      month: date.toLocaleString("en", { month: "short" }),
+      books: 0,
+    };
+  });
+  const monthCounts = new Map(months.map((month) => [month.key, month]));
+
+  records.forEach((record) => {
+    if (!record.borrow_date) return;
+    const borrowedAt = new Date(`${record.borrow_date}T00:00:00`);
+    const month = monthCounts.get(`${borrowedAt.getFullYear()}-${borrowedAt.getMonth()}`);
+    if (month) month.books += 1;
+  });
+
+  return months;
+};
 
 export default function StudentDashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [dueSoonItems, setDueSoonItems] = useState([]);
   const [reservations, setReservations] = useState([]);
+  const [borrowActivity, setBorrowActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState(null);
 
@@ -44,6 +58,7 @@ export default function StudentDashboard() {
       .then(([statsRes, historyRes, reservationsRes]) => {
         setStats(statsRes.data);
         setReservations(reservationsRes.data);
+        setBorrowActivity(buildBorrowActivity(historyRes.data));
 
         const cutoff = new Date();
         cutoff.setDate(cutoff.getDate() + 2);
@@ -129,7 +144,7 @@ export default function StudentDashboard() {
           <p className="text-sm font-semibold text-slate-700 mb-1">Borrow Activity</p>
           <p className="text-xs text-slate-400 mb-4">Last 6 months</p>
           <ResponsiveContainer width="100%" height={180}>
-            <AreaChart data={BORROW_HISTORY_DEMO} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+            <AreaChart data={borrowActivity} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.15} />
