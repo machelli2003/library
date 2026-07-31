@@ -67,6 +67,7 @@ export default function Login() {
             </div>
             <input
               type="password"
+              autoComplete="current-password"
               required
               placeholder="••••••••"
               {...register("password", { required: true })}

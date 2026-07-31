@@ -30,9 +30,13 @@ export default function BookForm() {
   const onSubmit = async (data) => {
     setError("");
     setFieldErrors({});
+    if (!Number.isInteger(data.quantity) || data.quantity < 1) {
+      setFieldErrors({ quantity: "Quantity must be at least 1." });
+      setError("Please enter a valid quantity before saving.");
+      return;
+    }
     const payload = {
       ...data,
-      quantity: Number(data.quantity),
       category_id: data.category_id ? data.category_id : null,
     };
     try {
@@ -159,7 +163,7 @@ export default function BookForm() {
                 min="1"
                 required
                 placeholder="e.g. 5"
-                {...register("quantity", { required: true, min: 1 })}
+                {...register("quantity", { required: true, valueAsNumber: true, min: 1 })}
                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 transition shadow-sm placeholder:text-slate-400 focus:border-indigo focus:ring-1 focus:ring-indigo outline-none"
               />
               {fieldErrors.quantity && (
